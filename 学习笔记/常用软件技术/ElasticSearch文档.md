@@ -159,6 +159,14 @@ GET /learn/goods/_search?q=goodsMerchantsId:89
 
 ​	指定了使用一个JSON，来封装需要查询的条件。
 
+- 全文检索：
+
+```http
+GET /_search?q=34
+```
+
+
+
 - 基础条件查询：
 
 ```json
@@ -269,6 +277,492 @@ GET /_cluster/health?pretty
   "active_shards_percent_as_number": 50
 }
 ```
+
+
+
+
+
+### 3、更新文档
+
+#### 1） PUT 更新 --- 全文档更新
+
+​	使用 PUT方式进行数据的更新操作，会将之前的文档删除，然后将数据进行更新为PUT里面的数据。例如：
+
+```json
+PUT /search_goods/goods/1807
+{
+  "goodsName": "这个是商品 ",
+  "goodsType": 8
+}
+```
+
+​	**注意：**更新文档，是先将之前的文档标记为 ==清除状态==，然后更换id指向新增的文档。
+
+#### 2）update 更新 --- 文档部分更新
+
+​	使用 update方式的更新，能够保证的是覆盖现有字段的值，以及新增新的字段。例如：
+
+```http
+POST /learn/goods/12/_update
+{
+  "doc": {
+    "birth": "2018-11-12",
+    "args": [
+      1,2,3
+      ]
+  }
+}
+```
+
+#### 3）update更新 --- 更新失败重试
+
+​	当多个进程进行修改操作以后，则可能会导致更新失败（重建索引的时候，版本错误了）。则需要设置更新失败的重试次数。
+
+​	设置参数 `retry_on_conflict` 来自动完成，这个参数规定了失败之前 `update` 应该重试的次数，它的默认值为 `0` 。	
+
+```http
+POST /learn/goods/12/_update?retry_on_conflict=5
+{
+  "doc": {
+    "birth": "2018-11-12",
+    "args": [
+      1,2,3
+      ]
+  }
+}
+```
+
+### 4、创建文档
+
+#### 1）POST--创建文档
+
+​	使用 POST请求创建文档，能够自动的调用ElasticSearch生成 _id 的方法，保证文档创建出来的id唯一性。例如：
+
+```json
+POST /learn/goods
+{
+  "name": "asfsad",
+  "age": 50
+}
+```
+
+#### 2）PUT --创建文档
+
+​	使用PUT方式进行文档的创建，需要手动指定文档的 _id，以及指定操作类型为 create。例如：
+
+```json
+PUT /learn/goods/12?op_type=create
+{
+  "name": "aaa",
+  "age": 21
+}
+```
+
+- 创建成功，会返回的状态码为 201 create，以及携带的元数据信息。
+- 创建失败，会返回 409 Conflict响应码，以及携带者错误信息。
+
+### 5、删除文档 -- DELETE
+
+​	删除文档，使用的是 DELETE标签。例如：
+
+```http
+DELETE /learn/goods/12
+```
+
+- **查找到了对应的文档**：ElasticSearch如果在库中查找到了对应的文档，则进行删除的操作，并返回 200 状态码。返回的结构体中，version版本增加了1。
+
+- **未查找到对应的文档**：ElasticSearch如果未查找到对应的文档，则返回 404 Not Found 状态码。返回的结构体中，version的版本增加1。
+
+  **注意：** 在ElasticSearch中，对文档的操作，无论是正常还是异常操作， _version的版本都会记录依次增加，这是实现跨多节点时保障正确执行的顺序操作。
+
+  **注意：**在ElasticSearch中，删除文档，也不会立即将文档从磁盘中进行删除，而是先将其标记为 **删除状态**。待到不断的索引更多的数据，ElasticSearch才会在后台清除标记为已删除的文档。
+
+### 6、数据上锁
+
+-  ***悲观并发控制*** 
+
+   这种方法被关系型数据库广泛使用，它假定有变更冲突可能发生，因此阻塞访问资源以防止冲突。 一个典型的例子是读取一行数据之前先将其锁住，确保只有放置锁的线程能够对这行数据进行修改。 
+
+-  ***乐观并发控制***
+
+   Elasticsearch 中使用的这种方法假定冲突是不可能发生的，并且不会阻塞正在尝试的操作。 然而，如果源数据在读写当中被修改，更新将会失败。应用程序接下来将决定该如何解决冲突。 例如，可以重试更新、使用新的数据、或者将相关情况报告给用户。 
+
+  - 在ElasticSearch中，==使用的是 **_version** 来实现乐观锁==。使用方式：
+
+    - 第一步，查看文档对应的版本，此处版本为1
+
+    ```json
+    {
+      "_index" :   "website",
+      "_type" :    "blog",
+      "_id" :      "1",
+      "_version" : 1,
+      "found" :    true,
+      "_source" :  {
+          "title": "My first blog entry",
+          "text":  "Just trying this out..."
+      }
+    }
+    ```
+
+    - 第二步，使用当前版本，来进行文档的更新操作
+
+    ```json
+    PUT /website/blog/1?version=1 
+    {
+      "title": "My first blog entry",
+      "text":  "Starting to get the hang of this..."
+    }
+    ```
+
+    - 第三步，版本变成了2。下次在更改，则需要将版本提升为 2。否则会更新失败。
+
+  - 手动指定创建、更新文档以后，文档的版本号。例如：
+
+  ```json
+  <!--首先先创建一个版本号为5的文档-->
+  PUT /website/blog/2?version=5&version_type=external
+  {
+    "title": "My first external blog entry",
+    "text":  "Starting to get the hang of this..."
+  }
+  
+  <!--更改这个文档，并将其版本指定为10-->
+  PUT /website/blog/2?version=10&version_type=external
+  {
+    "title": "My first external blog entry",
+    "text":  "This is a piece of cake..."
+  }
+  ```
+
+### 7、获取多个文档
+
+​	在ElasticSearch中，能够使用 **`multi_get`、`mget API`**来进行将多个请求组合在一起进行查询，避免了但条查询的网络延迟、传输延迟。
+
+#### 1）mget API  批量操作 ---只能查询
+
+​	**使用 mget API，需要一个dos数组作为参数，每个元素包含需要检索的元数据(\_index 、\_type  、_id)。如果需要检索多个特定字段，则可以将其加入到 `\_source` 标签中。**
+
+实例一：查询到对应的商品的数据，使用 _source 指定对应的属性名称。
+
+```http
+GET /_mget
+{
+  "docs": [
+    {
+      "_index" : "search_goods",
+      "_type" : "goods",
+      "_id" : 1903
+    },
+    {
+      "_index" : "search_goods",
+      "_type" : "goods",
+      "_id" : 1905,
+      "_source" : ["goodsImage3","goodsId","goodsNowAmount"]
+    }
+  ]
+}
+```
+
+实例二：简洁写法
+
+```http
+GET /search_goods/goods/_mget
+{
+  "ids":["1903","1904"]
+}
+```
+
+#### 2）bulk  批量操作 -- 增删改查
+
+​	**bulk能够允许在单个步骤中进行多次 create、index、update、delete请求。**
+
+​	bulk的请求体格式为：
+
+```http
+{ action: { metadata }}\n
+{ request body        }\n
+{ action: { metadata }}\n
+{ request body        }\n
+...
+```
+
+​	例如一：
+
+```http
+POST /_bulk
+{"create" : {"_index": "learn", "_type": "goods", "_id": "5002"}}
+{"title" : "asdfasdf", "age" : 25}
+{"delete": {"_index": "search_goods", "_type": "goods", "_id": "1907"}}
+```
+
+​	例如二：
+
+```http
+POST /_bulk
+{ "delete": { "_index": "website", "_type": "blog", "_id": "123" }} 
+{ "create": { "_index": "website", "_type": "blog", "_id": "123" }}
+{ "title":    "My first blog post" }
+{ "index":  { "_index": "website", "_type": "blog" }}
+{ "title":    "My second blog post" }
+{ "update": { "_index": "website", "_type": "blog", "_id": "123", "_retry_on_conflict" : 3} }
+{ "doc" : {"title" : "My updated blog post"} } 
+```
+
+
+
+## 三、搜索
+
+### 1、基本概念
+
+- **映射（Mapping）** ：描述数据在每一个字段内如何存储。
+- **分析（Analysis）** ： 全文是如何处理，使之可以被搜索。
+- **领域特定查询语言（Query SQL）** ： ElasticSearch中强大的查询语言。
+
+### 2、多索引、多类型
+
+​	通常情况下，在多个索引中进行查询数据是常有的，可以通过URL中指定特殊的索引和类型达到想要的效果。例如：
+
+> /\_search
+>        在所有的索引中搜索所有的类型 
+>/gb/\_search
+>       在 gb 索引中搜索所有的类型 
+>/gb,us/\_search
+>        在 gb 和 us 索引中搜索所有的文档 
+>/g\*,u\*/\_search
+>        在任何以 g 或者 u 开头的索引中搜索所有的类型 
+>/gb/user/\_search
+>        在 gb 索引中搜索 user 类型 
+>/gb,us/user,tweet/\_search
+>        在 gb 和 us 索引中搜索 user 和 tweet 类型 
+>/\_all/user,tweet/\_search
+>        在所有的索引中搜索 user 和 tweet 类型 
+
+### 3、查询分页
+
+​	通常情况下，查询分页是根据  `size` 和 `from` 两个关键参数来设定的。
+
+- size ： 显示应该返回的结果数量。
+
+- from ： 显示应该跳过的厨师结果数量。
+
+  例如：
+
+  ```http
+  GET /_all/goods/_search?size=3&from=7
+  ```
+
+### 4、倒排索引
+
+​	ElasticSearch中使用的是都==**倒排索引**== 的数据结构来进行快速的全文检索。一个倒排索引由文档汇总所有的不重复词的列表组成。
+
+​	将文档中的数据进行拆分成单独的词，可以称它为 **词条** 或者 **tokens**，创建一个包含所有不重复词条的排序列表，然后累出每一个词条出现在哪一个文档中即可。
+
+### 5、分析与分析器
+
+#### 1）词条分析
+
+​	将需要进行拆分的词条，调用 ==**recall分析器**== 进行词条的分析操作，主要分为三部分：
+
+- **字符过滤器** ，将字符串按照顺序通过每一个字符过滤器，他们的任务是在分此前整理字符串。（字符过滤器主要是能够用来去掉不必要的属性，例如： HTML标签、将&改为and）。
+- **分词器** ，字符串使用 分词器 将其分解为单个的词条。（一个简单的分词器遇到空格或者标点的时候，就可能将其进行拆分）。
+
+- **token过滤器** ，词条按照顺序**通过 token过滤器**，这个过程可能会改变词条（例如：小写化Quick）、删除词条（删除像 a、and、or等无用词条）、增加词条（jump、leap同义词）。
+
+#### 2）词条分析器
+
+- **标准分析器** ，标准分析器是ElasticSearch中默认的分析器。
+  - 使用Unicode联盟定义的 单词边界 进行文本的划分。
+  - 删除绝大多数标点，将词条小写。
+- **简单分析器** ，简单分析器在任何不是字母的地方分割文本，将词条小写。
+
+- **空格分析器** ，在有空格的地方进行文本的划分。
+
+- **语言分析器** ，根据语言的特性进行不同的文本的划分操作。
+
+#### 3）分析器使用场景
+
+- 索引一个文档，需要将其进行拆分为词条来创建倒排索引。
+
+- 当需要进行全文搜索，也需要将搜索条件进行分析成词条，来与倒排索引进行匹配的操作。
+
+### 6、词条映射
+
+#### 1）简单域映射类型
+
+​	ElasticSearch支持的简单域类型：
+
+- 字符串 ： string。
+- 整数 ： byte、short、integer、long
+- 浮点数 ： float、double
+- 布尔类型 ： boolean
+- 日期 ： date
+
+​	映射主要是针对不同的数据类型，映射到ES中的不同的数据类型。
+
+#### 2）自动映射关系
+
+​	在ElasticSearch中，会使用动态映射操作，通过JSON中的基本数据类型，尝试猜测域类型，使用规则如下：
+
+```
+布尔类型： true、false        域类型：boolean
+整数： 123				   	  域类型：long
+浮点数：123.5			     域类型：double
+字符串，有效日期 2014-11-20    域类型：date
+字符串 for update			  域类型：string
+```
+
+#### 3）查看文档映射的类型：
+
+```http
+GET /learn/_mapping
+```
+
+#### 4）字段索引方式--index
+
+​	index属性使用与控制在ElasticSearch中，**控制字段的索引方式**，主要包含三种：
+
+- **analyzed** : 全文索引，首先先分析字符串，然后进行索引。
+- **not_analyzed** ：索引这个域，索引精确值。
+- **no** ： 不索引这个域，这个域不会被搜索到。
+
+#### 5）删除索引
+
+```http
+DELETE /learn
+```
+
+#### 6）创建新索引
+
+```http
+PUT /user_my
+{
+  "mappings": {
+    "tweet" : {
+      "properties": {
+        "tweet" : {
+          "type": "string",
+          "analyzer": "standard"
+        },
+        "date" : {
+          "type": "date"
+        },
+        "name" : {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
+
+```
+
+#### 7）复杂核心域类型
+
+​	复杂核心域类型主要是包含 null、数组、对象等。
+
+- **多值域** ： 使用一个标签包含多个数据，比如数组：{"tag": ["zsl", "fsp"]}
+  - 数组封装在ElasticSearch中以后，会变得无序。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -859,11 +1353,8 @@ PUT /lib/user/1
 ```
 POST /lib/user/1/_update
 {
-
   "doc":{
-  
       "age":33
-      
       }
 }
 ```

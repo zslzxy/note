@@ -1,5 +1,30 @@
 [TOC]
 # java面试基础题型
+
+### 0、i = i++ 与 i = ++i 区别
+
+​	java中使用的是中间缓存变量机制：
+
+- i = i++ 等同于：
+
+  ​	temp = i; (temp指向的是右边的i)
+
+  ​	i++;
+
+  ​	i = temp; (i指向的是左边的i)
+
+  ​	**所以结果为 0**
+
+- i = ++i 等同于：
+
+  ​	i++;
+
+  ​	temp = i ;(temp指向的是右边的i，现在为1)
+
+  ​	i = temp ;(i指向的是左边的i)
+
+  ​	**所以结果为 1**
+
 ### 1、java的八种基本数据类型
 基本数据类型：byte、int、double、float、boolean、char、long、short
 基本数据类型的封装类型：Byte、Integer、Double、Float、Boolean、Character、Long、Short
