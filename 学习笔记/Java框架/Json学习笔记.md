@@ -255,7 +255,8 @@ builder.serializeNulls();
 ```
 {"age":25}
 ```
-当使用 serializeNulls()方法方法以后，结果为：
+##### 当使用 serializeNulls()方法方法以后，结果为：
+
 ```
 {"name":null,"age":25}
 ```
@@ -312,10 +313,10 @@ public class Person {
 ```
 
 
-### 使用 @Expose 注解与 builder.excludeFieldsWithoutExposeAnnotation(); 来指定pojo的部分字段进行json转换。
+##### 使用 @Expose 注解与 builder.excludeFieldsWithoutExposeAnnotation(); 来指定pojo的部分字段进行json转换。
 
 代码为：先创建一个pojo，并使用@Expose注解来指定哪几个字段来进行json的转换。
-```
+```java
 /**
 *指定 name、id两个属性来进行json的转换
 */

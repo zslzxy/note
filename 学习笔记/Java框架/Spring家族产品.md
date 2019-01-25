@@ -606,3 +606,98 @@ public class HandleExecption {
 ```
 <Connector URIEncoding="utf-8" connectionTimeout="20000" port="8080" protocol="HTTP/1.1" redirectPort="8443"/>
 ```
+
+### 十七、SpringMVC视图渲染
+
+#### 1、Model
+
+**1）层级关系**：Model接口主要的父子关系为：
+
+![1547176806894](assets/1547176806894.png)	
+
+**2）作用场景**：Model主要作用适用于 将数据放置到请求域中，页面获取请求域中的数据即可。
+
+**3）基本介绍**：
+
+- **Model**接口下的直接实现类是 ExtendedModelMap，也是Springmvc中**默认的实现类**的调用。
+
+ExtendedModelMap继承了ModelMap，ModelMap继承了LinkedHashMap，主要是用于将数据进行存储。
+
+- **Map**会直接调用 ExtendedModelMap 的子类 BindingAwareModelMap，用于存放Map类型的数据。
+
+**4）实现步骤**：
+
+- 第一步：将Model  或者 Map(SpringMVc的map或者java.util.map均可)对象放置到形参中保存。
+- 第二步：调用 model.addAttribute() 方法，进行封装对应的数据。
+
+**5）model接口方法**：
+
+```java 
+   /**
+     * 添加键值属性对
+     */
+    Model addAttribute(String attributeName, Object attributeValue);
+
+    /**
+     * 以属性的类型为键添加属
+     */
+    Model addAttribute(Object attributeValue);
+
+    /**
+     * 以属性和集合的类型构造键名添加集合属性，如果有同类型会存在覆盖现象
+     * key名称为：“简单类名（首字母小写）”+“List”，如List生成的模型对象属性名为“stringList”
+     */
+    Model addAllAttributes(Collection<?> attributeValues);
+
+    /**
+     * 将attributes中的内容复制到当前的model中
+     * 如果当前model存在相同内容，会被覆盖
+     * map 的 key就是对应的 key的值
+     */
+    Model addAllAttributes(Map<String, ?> attributes);
+
+    /**
+     * 将attributes中的内容复制到当前的model中
+     * 如果当前model存在相同内容，不会被覆盖
+     * map 的 key就是对应的 key的值
+     */
+    Model mergeAttributes(Map<String, ?> attributes);
+
+    /**
+     * 判断是否有相应的属性值
+     */
+    boolean containsAttribute(String attributeName);
+
+    /**
+     * 将当前的model转换成Map
+     */
+    Map<String, Object> asMap();
+```
+
+6）**RedirectAttributes接口：**
+
+​	FlashAttributes 为一个请求存储意图为另外一个请求所使用的属性提供了一条途径. Flash attributes 在对请求的重定向生效之前被临时存储（通常是在session)中，并且在重定向之后被立即移除.
+
+```java
+	/**
+	 * Add the given flash attribute.
+	 * @param attributeName the attribute name; never {@code null}
+	 * @param attributeValue the attribute value; may be {@code null}
+	 */
+	RedirectAttributes addFlashAttribute(String attributeName, Object attributeValue);
+
+	/**
+	 * Add the given flash storage using a
+	 * {@link org.springframework.core.Conventions#getVariableName generated name}.
+	 * @param attributeValue the flash attribute value; never {@code null}
+	 */
+	RedirectAttributes addFlashAttribute(Object attributeValue);
+
+	/**
+	 * Return the attributes candidate for flash storage or an empty Map.
+	 */
+	Map<String, ?> getFlashAttributes();
+```
+
+​	**FlashAttributes 可以用来进行重定向的操作的时候，在其他的controller中获取到数据。通常使用的是@ModelAttribute注解来获取请求域中的数据。**
+

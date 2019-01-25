@@ -738,7 +738,7 @@ static修饰的变量会放在静态域，创建对象以后，会直接将属�
 - 常量一旦初始化以后，不能够再被赋值;
 
 
-### 十、内部类
+### 十、内部类、枚举类
 
 #### 1、定义：
 在类的方法里面再定义一个或者多个类。
@@ -785,7 +785,7 @@ name = Person.this.name;
 
 #### 6、代码如下：
 
-```
+```java
 public class TestInner {
 	
 	public static void main(String[] args) {
@@ -837,7 +837,7 @@ class Person {
 #### 7、局部内部类的使用：
 **1）局部匿名内部类的创建**  
 
-```
+```java
 class Person2 {
 	String name;
 	//局部匿名内部类
@@ -858,7 +858,7 @@ class Person2 {
 
 **2）局部内部类的创建**
 
-```
+```java
 class Person1 {
 	
 	String name;
@@ -875,8 +875,102 @@ class Person1 {
 }
 ```
 
+#### 8、枚举类
+
+​	枚举类常用的方法为：
+
+- ###### CourierEnum.values()  --- 返回具有指定类型的枚举类型的常量的数组。
+
+- ###### CourierEnum.HT.ordinal() --- 得到对应的这个枚举类型的常量的 下标（从0开始）。
+
+- ###### CourierEnum.HT.toString()  --- 得到对应的这个常量的值。
+
+```java
+public enum  CourierEnum {
+
+	ZT("ZT","中通快递"),
+	YT("YT","圆通快递"),
+	SF("SF","顺丰快递"),
+	YD("YD","韵达快递"),
+	YZ("YZ","邮政快递"),
+	HT("HT","汇通快递");
+
+	private String code;
+
+	private String msg;
+
+	private CourierEnum(String code, String msg) {
+		this.code = code;
+		this.msg = msg;
+	}
+
+	/**
+	 * 根据 code编码获取对应的Enum
+	 * @param code
+	 * @return
+	 */
+	public static CourierEnum getCourierEnumByCode(String code) {
+		// CourierEnum.values() 得到的是 枚举类的 value
+		for (CourierEnum courierEnum : CourierEnum.values()) {
+			if (courierEnum.code.equals(code)) {
+				return courierEnum;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 根据 msg过去对应的Enum
+	 * @param msg
+	 * @return
+	 */
+	public static CourierEnum getCourierEnumByMsg(String msg) {
+		// CourierEnum.values() 得到的是 枚举类的 value
+		for (CourierEnum courierEnum : CourierEnum.values()) {
+			if (courierEnum.msg.equals(msg)) {
+				return courierEnum;
+			}
+		}
+		return null;
+	}
+
+    /**
+    * 得到编码
+    */
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+    /**
+    * 得到描述
+    */
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+}
+
+class Tes {
+	public static void main(String[] args) {
+		String yt = CourierEnum.getCourierEnumByCode("YT").getCode();
+		String yt1 = CourierEnum.getCourierEnumByMsg("圆通快递").getMsg();
+		System.out.println(yt1);
+	}
+}
+
+```
+
+
 
 ### 十一、抽象类与接口
+
 #### 1、抽象类 (abstract class) :
 将一个父类设计的非常抽象，以至于他没有具体的实例，叫做抽象类。
 

@@ -1,9 +1,114 @@
-[toc]
+[TOC]
 # Java数据结构
 
 ---
 
+## 数据结构基本概念
+
+### 1、数据
+
+​	数据是描述客观事物的数值，字符以及能输入给计算机处理的各种符号的集合。
+
+### 2、数据元素
+
+​	是组成数据的基本单位，在计算机中通常被作为一个整体进行考虑和处理。也被称为记录。 
+
+### 3、数据项：
+
+​	数据项是数据不可分割的最小单位。一个数据元素可由多个数据项组成。
+
+### 4、数据之间的结构
+
+#### 逻辑结构：
+
+- 集合结构：结构中的数据除了同属于一个集合的关系外，无任何其他关系。
+
+- 线性结构：结构中的数据元素之间存在着一对一的线性关系。
+- 树状结构：结构中的数据元素之间存在着一对多的关系。
+- 图状结构（网状结构）：结构中的数据元素之间存在着多对多的任意关系。
+
+#### 物理结构：
+
+​	物理结构是指的是数据在计算机中的存在的方式。
+
+- 顺序存储结构：把数据元素存放在地址连续的存储单元里。类似于排队，每个人都按顺序站好。我们学习的高级程序语言中的数组就是顺序存储结构，计算机会帮你的数组在内存中找片连续的空间。
+
+- 链式存储结构：把数据元素存放在任意的存储单元里，这组存储单元可以是连续的，也可以不连续。只需要前一个元素记住下一个元素的内存地址，这样就像链条链在一起。
+
+## 算法
+
+​	**算法 + 数据结构 = 程序**，算法是规则的有限的集合，未解决特定问题而规定的一系列的操作。
+
+### 1、算法的特性：
+
+- **有穷性**：**在有限的步骤中正常结束程序**，不能进入无线循环。
+- **确定性：每个步骤都必须包含确定的含义**，不能够有歧义。
+
+- **可行性**：原则上能够精确运行。
+- **输入**：能够有多个输入。
+- **输出**：至少有一个输出。
+
+### 2、算法设计的要求：
+
+- 正确性：算法必须符合算法的特性。
+- 可读性：算法应该是便于人们去理解和相互交流。
+- 健壮性：能够处理、规避非法数据、异常情况。
+- 高效低耗：在算法的高效过程中必须保证消耗能够在承受范围之内。
+
+### 3、算法性能分析
+
+​	算法性能分析，主要是包含了 **算法执行时间 + 占用存储空间** 两部分因素。
+
+​	**判断一个算法的效率时，函数中的常数和其他次要项常常可以忽略，而应该关注最高阶项(主项)的阶数。**
+
+### 4、算法时间复杂度
+
+**定义**：算法分析过程中，语句纵的执行次数T(n) 是关于问题规模 n 的函数。进而分析T(n)随着 n 的变化的情况并确定T(n)的数量级。
+
+​	算法的时间复杂度 **T(n)=O(f(n))**，随着n的增大，算法时间的增长率相同，长做算法的**渐进时间复杂度**，简称 ：时间复杂度。
+
+​	**在计算渐近时间复杂度时，可以只考虑对算法运行时间贡献大的语句，而忽略那些运算次数少的语句，循环语句中处在循环内层的语句往往运行次数最多，即为对运行时间贡献最大的语句。**
+
+​	这样用大写O来体现时间复杂度的的记法，我们称为**大O表示法。**
+
+​	**一般情况下，随着n的增大，T(n)增长最慢的算法我们称之为最优算法。**
+
+
+
+**例如**：顺序时间复杂度为O(n),O(1),O(n^2),分别称为线性阶，常数阶和平方阶。
+
+- **O(1)常数阶**：每条语句的频度都是1，算法的执行时间不随着问题规模n增大而增长，即使有上千条语句，其执行时间也不过是一个比较大的常数。
+
+- **O(n)线性阶**：有一个n次循环的循环语句。随着n增长执行时间线性增长。
+
+- **O(n^2)平方阶**：循环中嵌套一个循环的情况。
+
+![img](assets/20170819203413097.png)
+
+​	常用的时间复杂度所耗费的时间从小到大是：
+
+![è¿éåå¾çæè¿°](assets/20170819203518001.png)
+
+​	最坏情况和平均情况：
+
+​		当我们需要查找一个数字从长度为n的数组时，最好的情况是第一个数字就是，这时候时间复杂度为O(1),也有可能在最后一次才找到，这时候时间复杂度就是O(n),这是最坏的情况。
+
+
+
+### 5、算法的空间性能
+
+​	算法的空间复杂度通过计算算法所需的存储空间实现，算法空间复杂度的公式是S(n)=O(f(n)),n是问题规模，f(n)是关于n的存储空间的函数。
+
+​	一般情况下，一个程序在机器上执行时，除了存储本身需要的指令、常量、变量和输入数据以外，还需要一些对数据进行操作的辅助存储空间。其中，对于输入数据所占用的具体存储量取决于问题本身，与算法无关，这样只需要分析该算法在实现时所需要的辅助空间单元个数即可。
+
+
+
+
+
+
+
 ## 一、java排序
+
 ### 1、直接插入排序
 #### 1）排序思想：
 再要进行排序的数组中，假设前 n-1 个数据是排好序了的，现在需要将第 n 个元素
@@ -16,7 +121,7 @@
 
 #### 4）代码实现:
 先创建一个工聚类，用于保存插入排序的算法的方法：
-```
+```java
 public class MyInsertSort {
 
     public long[] InsertSort(long[] arr,int len){
@@ -35,7 +140,7 @@ public class MyInsertSort {
 ```
 
 再创建一个测试这个方法的测试用例：
-```
+```java
 public class TestInsertSort {
 
     public static void main(String[] args) {
@@ -61,7 +166,7 @@ public class TestInsertSort {
 一共会经过数组长度n的（n-1）次；每一轮比较就会确定一个数的位置；每一轮比较的次数再逐渐的减少（第一次是比较n-1次，第二次就是比较到n-2次，一直到最后一次的比较即可）。
 
 #### 4）代码实现一：
-```
+```java
 /**
  * 冒泡排序
  * @param args
@@ -93,7 +198,7 @@ public static void main(String[] args) {
 
 #### 5）代码实现二：
 先创建一个专门用于处理冒泡排序的工具类，
-```
+```java
 public class MyBubble {
 
     public long[] bubbleSort(long arr[], int len) {
@@ -114,7 +219,7 @@ public class MyBubble {
 ```
 
 调用这个冒泡排序的工具类，来实现冒泡排序的操作。
-```
+```java
 public class TestBuuble {
 
     public static void main(String[] args) {
@@ -138,7 +243,7 @@ public class TestBuuble {
 
 #### 2）代码实现：
 先创建一个直接插入排序的工具类：
-```
+```java
 public class MySelectSort {
 
     public long[] SelectSort(long[] arr,int len){
@@ -164,7 +269,7 @@ public class MySelectSort {
 ```
 
 调用这个工具类的方法来对数据进行排序；
-```
+```java
 public class TestSelectSort {
 
     public static void main(String[] args) {
@@ -194,7 +299,7 @@ n = n*3 + 1;
 
 #### 4）代码实现：
 先创建一个希尔排序的工具类：
-```
+```java
 public class MyShellSort {
 
     public long[] ShellSort(long[] arr, int len) {
@@ -223,7 +328,7 @@ public class MyShellSort {
 ```
 
 在创建一个测试希尔排序的测试类：
-```
+```java
 public class TestMyShellSort {
     public static void main(String[] args) {
         long[] arr = {54,33,-1,66,78,2,34,1,0,55,11};
@@ -308,7 +413,7 @@ java数组主要是用于存储相同数据类型的一种实现方式。
 
 #### 2）代码实现：
 先创建一个专门用于编写数据增删改查的类MyArray；
-```
+```java
 public class MyArray {
 
     private long[] arr;
@@ -430,7 +535,7 @@ public class MyArray {
 ```
 
 在创建一个专门用于测试这些增删改查方法的测试类；
-```
+```java
 public class TestArray {
 
     public static void main(String[] args) {
@@ -485,7 +590,7 @@ public class TestArray {
 
 #### 3）代码实现：
 创建一个类，里面包含栈的各种操作方法：
-```
+```java
 public class MyStack {
 
     /**
@@ -573,7 +678,7 @@ public class MyStack {
 ```
 
 创建一个使用栈的测试用例：
-```
+```java
 public static void main(String[] args) {
         MyStack stack = new MyStack(5);
         stack.push(23);
@@ -616,7 +721,7 @@ public static void main(String[] args) {
 
 #### 2）代码实现：
 先创建一个非环形数组队列的类：
-```
+```java
 public class MyQueue {
 
     //队列底层存放数组
@@ -693,7 +798,7 @@ public class MyQueue {
 ```
 
 再创建一个非环形数组队列的测试用例：
-```
+```java
 public class TestQueue {
 
     public static void main(String[] args) {
@@ -728,7 +833,7 @@ public class TestQueue {
 
 #### 2）代码实现：
 先创建一个环形数组队列来实现队列的操作：
-```
+```java
 package com.data.struceure.queue;
 
 /**
@@ -822,7 +927,7 @@ public class MyCircularQueue {
 ```
 
 编写一个测试用例：
-```
+```java
 public class TestCricularQueue {
 
     public static void main(String[] args) {
@@ -855,7 +960,7 @@ public class TestCricularQueue {
 
 #### 2）代码实现：
 先创建一个节点的类：
-```
+```java
 public class Node {
 
     public long data;
@@ -875,7 +980,7 @@ public class Node {
 ```
 
 在创建一个链表的类：
-```
+```java
 public class LinkList {
 
     /**
@@ -998,7 +1103,7 @@ public class LinkList {
 ```
 
 最后创建一个专门用于单链表测试的测试用例：
-```
+```java
 public class TestLinkList {
     public static void main(String[] args) {
         Node head = new Node();
@@ -1028,7 +1133,7 @@ java双向链表是一个巨头前节点、后节点、中间数据的一个链�
 
 #### 2）代码实现：
 先创建一个node节点：
-```
+```java
 public class Node {
 
     public long data;
@@ -1049,7 +1154,7 @@ public class Node {
 ```
 
 再创建一个双向链表：
-```
+```java
 public class LinkList {
 
     private Node head;

@@ -232,7 +232,7 @@ class LatchDemo implements Runnable{
 也就是说：N个线程互相等待，任何一个线程完成之前，所有线程都必须等待。在最后一个未await之前，所有N个线程都不算完成，都处于阻塞状态。
 
 **实现代码：**  
-```
+```java
 public class Snippet {
 	
     public static void main(String[] args){
@@ -927,7 +927,7 @@ String str = stringLocal.get();
 方式二：在创建对象的时候，重写initialValue方法,为对象附初始值（常用方式）。
 
 注意：这种方式能够保证变量具有初始值，不会抛出空指针异常。
-```
+```java
 ThreadLocal<Long> longLocal = new ThreadLocal<Long>(){
     protected Long initialValue() {
         return Thread.currentThread().getId();

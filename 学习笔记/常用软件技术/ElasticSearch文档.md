@@ -1,5 +1,311 @@
 [TOC]
+# ES学习笔记
+
+​	ES是一个分布式的实时搜索分析引擎，它能够提欧共快速的去规模、探索对应的数据。主要包括：
+
+- 全文检索。
+- 结构化搜索。
+- 结构化分析。
+
+## 一、基本介绍
+
+### 1、Lucence库
+
+​	ElasticSearch使用的是Lucence做索引与搜索引擎的，能够将复杂的 **Lucence库**精简为一套简介的**RESTFul API**的操作方式，更加高效的使用Lucence库。
+
+### 2、基本描述
+
+​	ElasticSearch是一个：
+
+- 分布式的实时文档存储，每一个字段都能够进行索引与搜索。
+
+- 一个分布式实时搜索引擎。
+- 能够支持多节点的扩展，支持高数据量的规模的数据操作。
+
+​	ES是将所有的功能打包成为一个单独的服务，对外提供的是 简单的 **RESTFUL API** 的方式进行通信。能够使用web客户端或者其他请求功能（postman等）来进行ElasticSearch的操作。
+
+### 3、基本使用
+
+- 首先，先启动ElasticSearch。
+
+- 直接在浏览器中发送请求： http://localhost:9200/?pretty  能够查看ElasticSearch的基本信息。	得到的结果：
+
+  ```json
+  {
+      name: "Glenn Talbot",
+      //集群节点名称，能够在 elasticsearch.yml中修改集群名称
+      cluster_name: "elasticsearch",
+      cluster_uuid: "6dqa0tIqR7ev15vVZvcnjA",
+      version: {
+      	number: "2.4.6",
+      	build_hash: "5376dca9f70f3abef96a77f4bb22720ace8240fd",
+      	build_timestamp: "2017-07-18T12:17:44Z",
+      	build_snapshot: false,
+      	lucene_version: "5.5.4"
+      },
+      tagline: "You Know, for Search"
+  }
+  ```
+
+- 修改集群名称： 在 ElasticSearch.yml中添加：
+
+  ```yml
+  node.name: my_elasticsearch
+  ```
+
+- 修改集群插件、日志、数据目录：也是在 elasticsearch.yml中进行修改：
+
+  ```yaml
+  path.data: /path/to/data1,/path/to/data2 
+  
+  # Path to log files:
+  path.logs: /path/to/logs
+  
+  # Path to where plugins are installed:
+  path.plugins: /path/to/plugins
+  ```
+
+- 设置最小节点数：
+
+  ```yaml
+  discovery.zen.minimum_master_nodes: 2
+  ```
+
+### 4、ES交互
+
+​	ElasticSearch使用的RESTFUL API方式进行交互操作，请求组成：
+
+```http
+curl -X<VERB> '<PROTOCOL>://<HOST>:<PORT>/<PATH>?<QUERY_STRING>' -d '<BODY>'
+```
+
+- <VERB> : 选择的HTTP请求类型，GET、POST、PUT、DELETE等。
+- <PROTOCOL> : 使用的是什么请求（http...）
+- <HOST> : ElasticSearch集群中任意节点的主机名（主机地址）。
+- <PORT> : 运行ElasticSearch的端口号，默认为9200。
+- <PATH> : API的终端路径（也就是请求地址，例如 ： _cluster/status等）。
+- <QUERY_STRING> : 任意可选的查询字符串参数(例如： ?pretty 表示的是格式化的输出)。
+- <BODY> : 一个JSON格式的请求体。
+
+**格式化的获取到文档的数量：**
+
+```http
+http://localhost:9200/_count?pretty
+```
+
+## 二、面向文档
+
+​	ElasticSearch的基本数据类型是面向文档的，它的最小存储单位是 **对象 或者 文档**，而不是基本的key-value等方式的键值对数据。
+
+​	ElasticSearch中 能**够对文档进**行 **索引、排序、检索和过滤** 的操作，而不是仅仅针对的是行等。
+
+### 1、索引
+
+​	文档数据是存储在索引当中的。**一个ElasticSearch集群包含多个索引，一个索引包含多个类型，一个类型包含多个文档。**
+
+- **索引（动词）：** 索引意为 传统关系型数据库中的 数据库。是一个用于存储文档的地方。
+- **索引（名词）：** 索引一个文档就是存储一个文档到索引中，以便以后进行查找。
+- **倒排索引：** 类似于 关系型数据库中的 索引，主要是用于提高数据的检索效率（文档中的每一一个属性都是被索引了的）。
+
+### 2、新增文档 -- PUT 
+
+​	ES中新增数据，使用的是 **PUT** 请求方式。例如：
+
+```json
+/* put 索引名称/索引类型/索引id号  */
+PUT /learn/goods/1
+{
+	"id": 1779,
+	"goodsId": "113966985958589",
+	"goodsMerchantsId": 97,
+	"goodsName": "福尔摩斯探案全集：巴斯克维尔的猎犬",
+	"goodsNowAmount": 10,
+	"goodsDefaultAmount": 16,
+	"goodsProdPlace": "重庆",
+	"goodsProdTime": "Jan 16, 2019 4:44:57 PM",
+	"goodsShelfLife": "十二个月",
+	"goodsTypeId": 6,
+	"goodsState": "selling_now",
+	"goodsSellTime": "Jan 16, 2019 4:44:57 PM",
+	"goodsInventory": 40,
+	"rawAddTime": "Jan 16, 2019 4:44:57 PM"
+}
+```
+
+### 3、检索文档 -- GET
+
+​	检索ElasticSearch中的数据，使用的是 **GET** 发送请求。
+
+- 查询到ES中 id 为 2 的数据: 返回的是索引、类型、版本以及数据等信息。
+
+```http
+GET /learn/goods/2
+```
+
+- 查询到所有的数据：返回的是所有的数据的 索引、、、、、
+
+```http
+GET /learn/goods/_search
+```
+
+- 查询到 商家的 id 为 89 的数据：
+  - 将查询条件和条件的值 赋值给 变量 q。
+
+```http
+GET /learn/goods/_search?q=goodsMerchantsId:89
+```
+
+### 4、领域特定语言（DSL）
+
+​	指定了使用一个JSON，来封装需要查询的条件。
+
+- 基础条件查询：
+
+```json
+GET /learn/goods/_search
+{
+  "query": {
+    "match": {
+      "goodsState": "selling_now"
+    }
+  }
+}
+```
+
+- **过滤搜索**，使用过滤条件查询：查询出正在售卖的商品，并查找到商品在售价格大于 70的商品
+
+```json
+GET learn/goods/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "goodsState": "selling_now"
+          }
+        }
+      ],
+      "filter": {
+        "range": {
+          "goodsNowAmount": {
+            "gt": 70
+            }
+          }
+        }
+      }
+    }
+}
+```
+
+- **全文搜索**，能够对文档进行全文的搜索（实现的是匹配所有文档中的字段的一些字、词）
+  - **ES全文检索出的数据，能够根据相关性得分来进行排序。也就是查询到的数据与查询条件的匹配相似程度。**
+  - **模糊短语匹配** ： 使用 **match** 作为条件。
+  - **精确短语匹配** ： 使用 **match_phrase**作为查询条件。
+
+```json
+GET learn/goods/_search
+{
+  "query": {
+    "match": {
+      "goodsName": "洁云"
+    }
+  }
+}
+```
+
+```json
+GET learn/goods/_search
+{
+  "query": {
+    "match_phrase": {
+      "goodsName": "纸巾"
+    }
+  }
+}
+```
+
+- **高亮搜索**，对查询到的文档的 对应的属性的值，能够匹配上查询条件的数据添加高亮效果。
+
+```json
+GET learn/goods/_search
+{
+  "query": {
+    "match": {
+      "goodsName": "纸巾"
+    }
+  },
+  "highlight": {
+    "fields": {
+      "goodsName": {}
+    }
+  }
+}
+```
+
+- 获取集群健康信息
+  - green : 主分片、副分片 都正常运行。
+  - yellow : 主分片正常运行，但不是所有的副分片都能够进行正常的运行。
+  - red : 有主分片没有能够正常运行。
+
+```json
+GET /_cluster/health?pretty
+
+{
+  "cluster_name": "elasticsearch",
+  "status": "yellow",
+  "timed_out": false,
+  "number_of_nodes": 1,
+  "number_of_data_nodes": 1,
+  "active_primary_shards": 16,
+  "active_shards": 16,
+  "relocating_shards": 0,
+  "initializing_shards": 0,
+  "unassigned_shards": 16,
+  "delayed_unassigned_shards": 0,
+  "number_of_pending_tasks": 0,
+  "number_of_in_flight_fetch": 0,
+  "task_max_waiting_in_queue_millis": 0,
+  "active_shards_percent_as_number": 50
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 第一章 ElasticSearch入门篇
+
 ## 第一节 ElasticSearch概述
 ### 1.1ElasticSearch是一个基于Lucene的搜索服务器。
 它提供了一个分布式多用户能力的全文搜索引擎，基于RESTfulweb接口。ElasticSearch是用Java开发的，并作为Apache许可条款下的开放源码发布，是当前流行的企业级搜索引擎。设计用于云计算中，能够达到实时搜索，稳定，可靠，快速，安装使用方便。构建在全文检索开源软件Lucene之上的Elasticsearch，不仅能对海量规模的数据完成分布式索引与检索，还能提供数据聚合分析。据国际权威的数据库产品评测机构DBEngines的统计，在2016年1月，Elasticsearch已超过Solr等，成为排名第一的搜索引擎类应用
