@@ -664,27 +664,417 @@ PUT /user_my
 - **多值域** ： 使用一个标签包含多个数据，比如数组：{"tag": ["zsl", "fsp"]}
   - 数组封装在ElasticSearch中以后，会变得无序。
 
+### 7、请求体查询
 
+#### 1）GET请求携带参数查询
 
+​	使用GET请求，也能够携带请求体进行请求的查询操作。例如：
 
+- 空请求体： 
 
+  ```http
+  GET  /_search
+  ```
 
+- 携带索引，进行查询：
 
+  ```http
+  GET /learn/_search
+  ```
 
+- 携带分页信息：
 
+  ```http
+  GET /search_goods/_search
+  {
+    "from": 30,
+    "size": 20
+  }
+  ```
 
+#### 2）POST携带请求参数查询
 
+​	在大多数情况下，为了能够更好的进行请求参数的携带，使用POST请求进行查询。例如：
 
+```http
+POST /search_goods/_search
+{
+  "from": 0,
+  "size": 2
+}
+```
 
+#### 3）Query DSL查询表达式
 
+​	ElasticSearch中，能够使用一种非常灵活又富有表现能力的Query语言，使用简单的JSON接口来展现大多数的功能。**在ElasticSearch中，只需要将查询条件传递给 query 参数中。**例如：
 
+```http
+GET /_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+```
 
+- **查询语句的结构为：**
 
+```http
+{
+    QUERY_NAME: {
+        FIELD_NAME: {
+            ARGUMENT: VALUE,
+            ARGUMENT: VALUE,...
+        }
+    }
+}
+```
 
+#### 4）合并查询语句--bool查询
 
+**接收以下参数：**
 
+> - must：
+>   文档 必须匹配这些条件才能被包含进来。 
 
+> - must_not：
+>   文档 必须不匹配这些条件才能被包含进来。 
 
+> - should：
+>   如果满足这些语句中的任意语句，将增加 _score，否则，无任何影响。它们主要用于修正每个文档的相关性得分。 
+
+> - filter：
+>   必须 匹配，但它以不评分、过滤模式来进行。这些语句对评分没有贡献，只是根据过滤标准来排除或包含文档。
+
+```json
+{
+    "bool": {
+        "must": { "match": { "title": "how to make millions" }},
+        "must_not": { "match": { "tag":   "spam" }},
+        "should": [
+            { "match": { "tag": "starred" }},
+            { "range": { "date": { "gte": "2014-01-01" }}}
+        ]
+    }
+}
+```
+
+### 8、查询与过滤
+
+​	在ElasticSearch中，拥有两套对应的查询方式：
+
+- 条件查询： Query
+- 过滤查询： filter
+
+​        条件查询 query主要是用于评分查询的操作，用于计算每一个文档的 **相关程度**，并将其分配给 "_score" 字段进行记录。**过滤查询要从文档中查询对应的匹配的文档，并计算相关的得分，主要是用于全文检索的操作。**
+
+​        **过滤查询 filter 主要是能够不执行评分的操作，在不需要全文检索的情况下，通常能够提高效率。**
+
+### 9、重要查询
+
+- **==match_all查询==** ：match_all 查询简单的 **匹配所有文档**。例如：
+
+  ```http
+  GET search_goods/_search
+  {
+    "query": {
+      "match": {
+      "goodsName" : "阿斯蒂芬"
+      }
+    }
+  }
+  ```
+
+- **==match查询==** ： match 查询是进行任何查询中的**标准查询**操作。
+
+  - match查询如果是针对的 not_analyzed 类型的字段，则是进行精确查询。
+  - match进行精确查询的时候，能够使用 fliter 来代替query。
+
+- **==multi_match查询==** ： multi_match **能够在多个字段上进行match操作**。例如：
+
+  ```http
+  GET search_goods/_search
+  {
+    "query": {
+      "multi_match": {
+      "query" : "阿斯蒂芬",
+      "fields" : ["goodsName","goodsDetail1"]
+      }
+    }
+  }
+  ```
+
+- ==**range查询**== ： 查询找出那些落**在指定区间内的数字或者时间**。
+
+  - **gt** ： 大于
+  - **gte** ： 大于等于
+  - **lt** ： 小于
+  - **lte** ： 小于等于
+  - 例如：
+
+  ```http
+  GET /search_goods/_search
+  {
+    "query": {
+      "range": {
+      "goodsDefaultAmount": {
+        	"gte": 30,
+        	"lt": 50
+        }
+    	}
+    }
+  }
+  ```
+
+- **==trem查询==** ： trem查询被用于精确值的匹配操作，这些精确值可能是数字、时间、布尔值等 not_analyzed类型的字符串。例如：
+
+  ```http
+  GET /search_goods/_search
+  {
+    "query": {
+      "term": {
+        "goodsDefaultAmount": {
+          "value": "50"
+        }
+      }
+    }
+  }
+  ```
+
+- **==trems查询==** ： terms查询与term相比，是能够进行多指匹配操作
+
+```http
+GET /search_goods/_search
+{
+  "query": {
+    "terms": {
+      "goodsDetail1": [
+        "书",
+        "本"
+      ]
+    }
+  }
+}
+```
+
+- **==exists查询==** ：exists 查询适用于指定那些字段中有值（exists == 存在）的文档。例如：
+- **==missing查询==** ： missing 查询适用于指定字段中无值（missing == 不存在）的文档。
+
+### 10、多组合查询
+
+​	多个字段上查询各种各样的文本，并根据条件进行过滤操作。类似于构建高级查询的操作。
+
+- **==bool查询==** ： bool查询将多个查询组合在一起，成为一个用户自己需求的bool查询。参数：
+
+  - must ： 文档必须匹配这些条件才能够被包含进来。
+  - must_not ： 文档必须不匹配这些条件才能够被包含进来。
+  - should ： 文档中瞒住这些语句中的任意语句，将增加 `_score` 属性，否则，不进行计分的操作。
+  - filter ： 必须匹配，但是不以评分、过滤的模式来进行文档的查询和过滤操作.
+
+  **注意**：*如果不存在must语句，则至少需要能够匹配其中的一条should语句。如果存在must语句，则能够不需要should语句 。*
+
+  **例如：**
+
+  ```http
+  GET /search_goods/_search
+  {
+    "query": {
+      "bool": {
+        "must": [
+          {"match": {
+            "goodsDefaultAmount": 55
+          }}
+        ],
+        "must_not": [
+          {"match": {
+            "goodsDetail1": "书"
+          }}
+        ],
+        "should": [
+          {"range": {
+            "goodsDefaultAmount": {
+              "gte": 30,
+              "lte": 70
+            }
+          }}
+        ],
+        "filter": {
+          "range": {
+            "goodsTypeId": {
+              "gte": 7,
+              "lt": 8
+            }
+          }
+        }
+      }
+    }
+  }
+  ```
+
+### 11、查询验证
+
+-  **==/_validate/query==** 关键字来进行查询条件的验证操作。例如:
+
+```http
+GET /search_goods/_validate/query
+{
+  "query": {
+    "match": {
+      "goodsDesc": "TEXT"
+    }
+  }
+}
+```
+
+返回的结果为：
+
+```http
+{
+   /*表示的是对应的查询的语句是否正常*/
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  }
+}
+```
+
+- 使用 **==/_validate/query?explain==** 来对查询语句进行可读的描述。例如：
+
+```http
+GET /search_goods/_validate/query?explain
+{
+  "query": {
+    "match": {
+      "goodsDesc": "TEXT"
+    }
+  }
+}
+```
+
+​	结果为：
+
+```http
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "search_goods",
+      "valid": true,
+      /*表示的是这个字段对应的字段类型*/
+      "explanation": "goodsDesc:text"
+    }
+  ]
+}
+```
+
+### 12、排序
+
+​	ElasticSearch中，是将 **相关性抽象成为了一个浮点数**。相关性的得分是由一个浮点数进行表示的，并在搜索结果中的 `_score` 参数中返回。默认是使用 `_score` 进行**降序排序**。
+
+- 使用多个字段进行排序：
+
+```http
+GET /search_goods/_search
+{
+  "query": {
+    "bool": {
+      "filter": {
+        "term": {
+          "goodsDetail1": "作者"
+        }
+      }
+    }
+  },
+  "sort": [
+    {
+      "rawAddTime": {
+        "order": "desc"
+      },
+      "goodsDefaultAmount": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+```
+
+## 四、索引
+
+### 1、创建索引
+
+​	ElasticSearch中，通常情况下是需要创建索引来实现自定义索引属性的。手动创建索引的代码：
+
+```http
+PUT /my_index
+{
+  "settings": {
+    ...
+  },
+  "mappings": {
+    "type_one": {...},
+    "type_two": {...},
+    ....
+  }
+}
+```
+
+### 2、删除索引
+
+- 删除一条索引：
+
+```http
+DELETE /learn
+```
+
+- 删除指定的多条索引：
+
+```http
+DELETE /learn,search_goods
+```
+
+- 删除全部索引：
+
+```http
+DELETE /*
+```
+
+### 3、索引设置
+
+- **==number_of_shards==** ：在ElasticSearch中，默认的索引的主分片数为 5，且索引创建以后就不能够进行修改。
+
+- **==number_of_replicas==** ：每一个主分片的数目，默认值都是1。这个备份分片数目能够在后期进行更改。
+
+  例如：创建索引，设置对应的分片数据：
+
+```http
+PUT /my_index
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  }
+}
+```
+
+​	修改创建的索引的备份分片数目：
+
+```http
+PUT /my_index/_settings
+{
+  "number_of_replicas": 2
+}
+```
+
+### 4、分析器
+
+​	分析器主要是适用于分割索引中的属性的数据。ElasticSearch中自定义的分析器
 
 
 
@@ -2497,10 +2887,11 @@ GET /lib3/user/_search
 >- filter：
     必须 匹配，但它以不评分、过滤模式来进行。这些语句对评分没有贡献，只是根据过滤标准来排除或包含文档。
 
-**注意 ：**   相关性得分是如何组合的。每一个子查询都独自地计算文档的相关性得分。一旦他们的得分被计算出来， bool 查询就将这些得分进行合并并且返回一个代表整个布尔操作的得分。
+**注意 ：**   相关性得分是如何组合的。每一个子查询都独自地计算文档的相关性得分。一旦他们的得分被计算出来， bool 查询就将这些得分进行合并并且返回一个代表整个bool操作的得分。
 
 例如：  
 下面的查询用于查找 title 字段匹配 how to make millions 并且不被标识为 spam 的文档。那些被标识为 starred 或在2014之后的文档，将比另外那些文档拥有更高的排名。如果 _两者_ 都满足，那么它排名将更高：
+
 ```
 {
     "bool": {
