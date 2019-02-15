@@ -701,3 +701,24 @@ ExtendedModelMap继承了ModelMap，ModelMap继承了LinkedHashMap，主要是�
 
 ​	**FlashAttributes 可以用来进行重定向的操作的时候，在其他的controller中获取到数据。通常使用的是@ModelAttribute注解来获取请求域中的数据。**
 
+### 十八、SpringMVC拦截器
+
+​	在SpringMVC中，自定义拦截器，如果需要进行依赖注入其他Bean对象的时候，直接使用@Autowired注解会出现空指针异常。是因为拦截器是在ApplicationContext完成之前就已经创建好了的。
+
+​	所以，解决办法：将创建这个拦截器Bean对象提前进行创建。
+
+```java
+@Configuration
+public class WebMvcConfig implements WebMvcConfigurer {
+	//在此处，将拦截器注册为一个 Bean
+	@Bean
+	public HandlerInterceptor getKillInterceptor(){
+		return new KillInterceptor();
+	}
+
+	@Override public void addInterceptors(InterceptorRegistry registry) {
+registry.addInterceptor(getKillInterceptor()).addPathPatterns("/kill/toKill");
+	}
+}
+```
+

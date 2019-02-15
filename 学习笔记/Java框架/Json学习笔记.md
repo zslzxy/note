@@ -509,7 +509,7 @@ public class Student {
 ```
 ### 第三步：执行pojo与json之间的转化
 将json数据转换为pojo：
-```
+```java
 @Test
 public void test2() {
 	String json = "{\"name\":\"zsl\",\"age\":23}";
@@ -526,7 +526,7 @@ public void test2() {
 ```
 
 将pojo转换为json数据：
-```
+```java
 @Test
 public void test3() {
 	
@@ -539,7 +539,7 @@ public void test3() {
 ```
 
 将list转换为json数据：
-```
+```java
 @Test
 public void test3() {
 	Student student = new Student("qqq",123,new Date());
@@ -555,7 +555,7 @@ public void test3() {
 ```
 
 将json数据转换为List数据：
-```
+```java
 @Test
 public void test4() {
 	//创建一个List集合类型的json数据

@@ -346,9 +346,208 @@ public class TestMyShellSort {
 快速排序是通过将一个数组分为两个子数组，然后通过递归调用自身的每一个子数组进行快速排序实现。
 
 #### 2）划分对象：
-设置关键字，将比关键字小的数据放在一组，比关键字大的放在另外一组中。通常是设置第一个数据为关键字。
+​	设置关键字，将比关键字小的数据放在一组，比关键字大的放在另外一组中。通常是设置第一个数据为关键字。使用第一个元素作为第一次的分割对象，然后先进行右边的判断，如果右边的数据大于分割值，则 right对象减1，否则的话就行数据的交换操作。依次递归执行，知道left与right相等以后，停止递归操作，得到需要的结果。
 
 #### 3）代码实现：
+
+```java
+/**
+ *
+ * @Filename QuickSort.java
+ *
+ * @Description 快速排序
+ *
+ * @Version 1.0
+ *
+ * @Author 张世林
+ *
+ * @Email 张世林@yiji.com
+ *
+ * @History
+ *<li>Author: 张世林</li>
+ *<li>Date: 2019年02月11日</li>
+ *<li>Version: 1.0</li>
+ *<li>Content: create</li>
+ *
+ */
+public class QuickSort {
+
+	/**
+	 * 进行排序的操作，一直到左边与右边重叠以后，停止递归，执行返回操作
+	 * @param arr : 需要排序的数组
+	 * @param left ：左边的位置
+	 * @param right ： 右边的位置
+	 * @return ： 排序完成以后的数组对象
+	 */
+	public static int[] quickSort(int[] arr,Integer left,int right) {
+		if (left < right) {
+			System.out.println(left.hashCode());
+			int position = position(arr, left, right);
+			quickSort(arr,left,position-1);
+			quickSort(arr,position+1,right);
+		}
+		return arr;
+	}
+
+	/**
+	 * 返回分割点，这里的作用主要是得到这个对象分割点以后，来进行排序的操作
+	 * @param arr ：数组
+	 * @param left ：左边的起点
+	 * @param right ：右边的位置
+	 * @return
+	 */
+	public static int position(int[] arr, Integer left, int right) {
+		int midea = arr[left];
+
+		while (left < right) {
+			while (left < right && arr[right] >= midea) {
+				right--;
+			}
+			swap(arr,left,right);
+
+			while (left < right && arr[left] < midea) {
+				left++;
+			}
+			swap(arr,left,right);
+		}
+		System.out.println("position中的left："+left.hashCode());
+		return left;
+	}
+
+	/**
+	 * 交换数据，将对应的两个数据进行交换
+	 * @param arr
+	 * @param left
+	 * @param right
+	 */
+	public static void swap(int[] arr, int left, int right) {
+		int temp = arr[right];
+		arr[right] = arr[left];
+		arr[left] = temp;
+	}
+
+	public static void main(String[] args) {
+		int[] arr = new int[] { 12, 13, 1, 3, 9, 5, 7, 6, 11 };
+		int[] ints = quickSort(arr, 0,arr.length-1);
+		for (int anInt : ints) {
+			System.out.println(anInt);
+		}
+	}
+
+}
+
+```
+
+### 6、并归排序
+
+#### 1）基本思想
+
+ * 归并排序（Merge Sort）与快速排序思想类似：将待排序数据分成两部分，继续将两个子部分进行递归的归并排序；然后将已经有序的两个子部分进行合并，最终完成排序。
+ * 其时间复杂度与快速排序均为O(nlogn)，但是归并排序除了递归调用间接使用了辅助空间栈，还需要额外的O(n)空间进行临时存储。从此角度归并排序略逊于快速排序，
+ * 但是**归并排序是一种稳定的排序算法**，快速排序则不然。
+ * 所谓稳定排序，表示对于具有相同值的多个元素，其间的先后顺序保持不变。对于基本数据类型而言，一个排序算法是否稳定，影响很小，但是对于结构体数组，
+ * 稳定排序就十分重要。例如对于student结构体按照关键字score进行非降序排序：
+
+#### 2）代码实现
+
+```java
+/**
+ * 并归排序
+ *
+ * @Filename MergeSort.java
+ * @Description 并归排序
+ * @Version 1.0
+ * @Author 张世林
+ * @Email 张世林@yiji.com
+ * @History <li>Author: 张世林</li>
+ * <li>Date: 2019年02月11日</li>
+ * <li>Version: 1.0</li>
+ * <li>Content: create</li>
+ *
+ * 归并排序（Merge Sort）与快速排序思想类似：将待排序数据分成两部分，继续将两个子部分进行递归的归并排序；然后将已经有序的两个子部分进行合并，最终完成排序。
+ * 	 其时间复杂度与快速排序均为O(nlogn)，但是归并排序除了递归调用间接使用了辅助空间栈，还需要额外的O(n)空间进行临时存储。从此角度归并排序略逊于快速排序，
+ * 	 但是归并排序是一种稳定的排序算法，快速排序则不然。
+ * 	 所谓稳定排序，表示对于具有相同值的多个元素，其间的先后顺序保持不变。对于基本数据类型而言，一个排序算法是否稳定，影响很小，但是对于结构体数组，
+ * 	 稳定排序就十分重要。例如对于student结构体按照关键字score进行非降序排序：
+ *
+ */
+public class MergeSort {
+
+	/**
+	 * 归并排序算法
+	 * @param list     待排序的列表
+	 * @param tempList 临时列表
+	 * @param head     列表开始位置
+	 * @param rear     列表结束位置
+	 */
+	public static int[] mergeSort(int[] list, int[] tempList, int head, int rear) {
+		if (head < rear) {
+			// 取分割位置
+			int middle = (head + rear) / 2;
+			// 递归划分列表的左序列
+			mergeSort(list, tempList, head, middle);
+			// 递归划分列表的右序列
+			mergeSort(list, tempList, middle + 1, rear);
+			// 列表的合并操作
+			merge(list, tempList, head, middle + 1, rear);
+		}
+		return list;
+	}
+
+	/**
+	 * 合并操作(列表的两两合并)
+	 * @param list : 并归的集合
+	 * @param tempList ： 中间集合
+	 * @param head ： 头指针位置
+	 * @param middle ： 中间位置
+	 * @param rear ： 尾部位置
+	 */
+	public static void merge(int[] list, int[] tempList, int head, int middle, int rear) {
+		// 左指针尾
+		int headEnd = middle - 1;
+		// 右指针头
+		int rearStart = middle;
+		// 临时列表的下标
+		int tempIndex = head;
+		// 列表合并后的长度
+		int tempLength = rear - head + 1;
+
+		// 先循环两个区间段都没有结束的情况
+		while ((headEnd >= head) && (rearStart <= rear)) {
+			// 如果发现右序列大，则将此数放入临时列表
+			if (list[head] < list[rearStart]) {
+				tempList[tempIndex++] = list[head++];
+			} else {
+				tempList[tempIndex++] = list[rearStart++];
+			}
+		}
+		// 判断左序列是否结束
+		while (head <= headEnd) {
+			tempList[tempIndex++] = list[head++];
+		}
+		// 判断右序列是否结束
+		while (rearStart <= rear) {
+			tempList[tempIndex++] = list[rearStart++];
+		}
+		// 交换数据
+		for (int i = 0; i < tempLength; i++) {
+			list[rear] = tempList[rear];
+			rear--;
+		}
+	}
+
+
+	public static void main(String[] args) {
+		int[] arr = new int[] { 12, 13, 1, 3, 9, 5, 7, 6, 11 };
+		int[] arr1 = new int[arr.length];
+		int[] ints = mergeSort(arr, arr1, 0, arr.length - 1);
+		for (int anInt : ints) {
+			System.out.println(anInt);
+		}
+	}
+}
+
+```
 
 
 
@@ -362,7 +561,7 @@ public class TestMyShellSort {
 ![image](https://note.youdao.com/yws/api/personal/file/062F1733F6194BA9B662FBC2E51F25B6?method=download&shareKey=0655afbc697aaf8e53ada4c0c97716f6)
 
 #### 4）代码实现：
-```
+```java
 public static void main(String[] args) {
 		int[] a = new int[] { 12, 23, 34, 45, 56, 67, 77, 89, 90 };
 
@@ -529,8 +728,6 @@ public class MyArray {
         elements++;
         return arr[index];
     }
-
-
 }
 ```
 
