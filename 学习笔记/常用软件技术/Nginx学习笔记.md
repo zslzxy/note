@@ -321,3 +321,27 @@ http {
 
 
 
+### Nginx配置静态资源文件
+
+```nginx
+	# nginx的自动配置
+	upstream yienmall{
+       server 127.0.0.1:8081;
+    }
+
+    server {
+           listen    80;
+           server_name  www.yienmall.com;
+
+           location / {
+                proxy_pass http://yienmall;
+                index index.html;
+           }
+
+
+			location /webroot/static/ {
+				expires 30d;
+			}
+    }
+```
+
