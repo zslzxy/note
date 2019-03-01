@@ -46,7 +46,6 @@ set global validate_password_length=1;
 set password = password("新密码");
 ```
 
-
 5、设置字符集 ：
 修改/etc/my.cnf配置文件，在[mysqld]下添加编码配置，如下所示：
 
@@ -142,6 +141,7 @@ alert table 表名 rename 新表名;
 2）delete from 表名 where 条件      //根据条件删除表中数据
 
 3）drop table 表名     //删除表
+
 ##### 删除字段：
 alter table 表名 drop 字段名;
 
@@ -179,7 +179,7 @@ create table stu1d(
     age int not null default 18,
     salary double not null,
     primary key(id)                       //默认的主键名字与这个字段名字相同
-    foreign key(name) references person(name)    //将name字段作为外键指向person表的name
+    foreign key(name) references person(name) //将name字段作为外键指向person表的name
         on update cascade   //同步更新，当更新父表的外键的一些值，字表也会自动更新，可选
         on delete cascade    //同步删除，当删除父表的外键的一些值，子表也会自动删除，可选
 );
@@ -363,12 +363,35 @@ select * from employee where exists (select * from department where dept_id=201)
 #### 索引的分类：
 - 单值索引---一个索引只包含一个单列，一个表可以有多个单列索引。
 
-- 普通索引(允许字段重复)
-- 唯一索引(UNIQUE)----索引列的值必须为宜，允许有空值。
-- 全文索引---FULLTEXT
-- 单列索引
-- 多列索引---包含多列的索引
-- 空间索引
+- 主键索引(**PRIMARY**)----主键索引，创建主键就会自动添加索引。
+
+  - ```sql
+    ALTER TABLE `table_name` ADD PRIMARY KEY ( `column` ) 
+    ```
+
+- 普通索引( **INDEX**)----允许字段重复。
+
+  - ```sql
+    ALTER TABLE `table_name` ADD INDEX index_name ( `column` ) 
+    ```
+
+- 唯一索引(**UNIQUE**)----索引列的值必须不相同，允许有空值。
+
+  - ```sql
+    ALTER TABLE `table_name` ADD UNIQUE `index_name` (`column`)
+    ```
+
+- 全文索引(**FULLTEXT**)----仅适用于MyISAM存储引擎。
+
+  - ```sql
+    ALTER TABLE `table_name` ADD FULLTEXT `index_name` ( `column` )
+    ```
+
+- 组合索引---包含多列的索引
+
+  - ```sql
+    ALTER TABLE `table_name` ADD INDEX `index_name` ( `column1`, `column2`, `column3` )
+    ```
 
 #### B树索引算法：
 ​	按照特定的排序，将创建索引的列进行B树排序(也即是二叉树排序)，当使用索引查找的时候，就会使用二叉树的方式进行查找，实现快速查找。
@@ -401,13 +424,16 @@ select * from employee where exists (select * from department where dept_id=201)
 #### 创建索引：
 
 ##### 1）在创建表的时候添加索引：
-索引是使用index或者key两个关键字二选一来创建，前面可以选择索引的类型(可选的，可有可无)，后面为索引名(可有可无)，再接着是字段名，接着是长度(可有可无)。
+​	索引是使用index或者key两个关键字二选一来创建，前面可以选择索引的类型(可选的，可有可无)，后面为索引名(可有可无)，再接着是字段名，接着是长度(可有可无)。
 
 **语法：**   
-CREATE TABLE 表名 (  
-字段名 1 数据类型 [完整性约束条件…],   
-字段名 2 数据类型 [完整性约束条件…],   
-[ unique | fulltext | spatial ]  index | key [索引名] (字段名[(长度)] [ASC |DESC]) );  
+
+> CREATE TABLE 表名 (  
+> 	字段名 1 数据类型 [完整性约束条件…],   
+> 	字段名 2 数据类型 [完整性约束条件…],   
+> 	[ unique | fulltext | spatial ]  index | key [索引名] (字段名[(长度)] [ASC |DESC])
+>
+>  );  
 
 **例如：**  
 
@@ -422,14 +448,22 @@ index (name)
 
 ##### 2）在表上面添加索引：
 **语法：**   
-CREATE [UNIQUE | FULLTEXT | SPATIAL ] INDEX 索引名  ON 表名 (字段名[(长度)] [ASC |DESC]) ;
-例如：CREATE INDEX index_dept_name ON department (dept_name);  
+
+> CREATE [UNIQUE | FULLT EXT | SPATIAL ] INDEX 索引名  ON 表名 (字段名[(长度)] [ASC |DESC]) ;
+
+**例如：**
+
+```sql
+CREATE INDEX index_dept_name ON department (dept_name);  
+```
 
 **查看索引：**  
-show create table 表明\G;
+
+> show create table 表明\G; 
 
 **删除索引：**  
-DROP INDEX 索引名 ON 表名;
+
+> DROP INDEX 索引名 ON 表名; 
 
 **索引口诀：**
 - 索引失效的情况：  
@@ -447,7 +481,11 @@ DROP INDEX 索引名 ON 表名;
 - 小表驱动大表，即小的数据集来驱动大的数据集。
 
 ##### ORDER BY排序索引优化
-order by xxx，按照xxx排序，使用复合索引的第一个属性来进行排序，就会使用索引排序，更高效。
+>  order by xxx，按照xxx排序，使用复合索引的第一个属性来进行排序，就会使用索引排序，更高效。
+
+##### Explain执行计划
+
+>  https://www.cnblogs.com/songwenjie/p/9409852.html
 
 
 
@@ -490,7 +528,7 @@ order by xxx，按照xxx排序，使用复合索引的第一个属性来进行�
 触发器是一个特殊的存储过程，他的执行不是由程序调用，也不是手工调用，而是由事件来触发。当一个行为激活了触发器以后，会执行触发器的代码。
 #### 2、创建触发器：
 
-```
+```sql
 delimiter $$
 create trigger 触发器名称 before | after 触发事件 on 表名 for each now 
 begin
@@ -526,7 +564,7 @@ for each now ：指的是每操作一行就执行一次触发器。
 
 #### 4、创建存储过程：
 
-```
+```sql
 delimiter $$ 
 create procedure 过程名([形式参数列表]) 
 begin
@@ -536,21 +574,21 @@ delimiter ;
 ```
 
 ##### 存储过程的参数形式：
-[IN | OUT | INOUT] 参数名 类型 
-
-IN 输入参数 
-
-OUT 输出参数 
-
-INOUT 输入输出参数
-
-调用：call 存储过程名(实参列表) 
+> [IN | OUT | INOUT] 参数名 类型 
+>
+> IN 输入参数 
+>
+> OUT 输出参数 
+>
+> INOUT 输入输出参数
+>
+> 调用：call 存储过程名(实参列表) 
 
 
 #### 5、函数 function
 ##### 创建函数：
 
-```
+```sql
 delimiter $$ 
 create function 函数名(参数列表) returns 返回值类型 
 begin 有效的 SQL 语句 
@@ -571,7 +609,9 @@ select 函数名(实参列表)
 - 4）mysql.columns_priv --- 列级别权限
 
 #### 2、登录与退出mysql
-输入语句：mysql -h192.168.21.158 -P 3306 -uroot -p123456     
+**输入语句：**
+
+> mysql   -h192.168.21.158   -P 3306   -uroot   -p123456     
 
 **注意：**
 - -h 指定主机名 【默认为 localhost】 
@@ -605,18 +645,40 @@ grant 权限列表 on 库名.表名 to '用户名'@'客户端主机' [identified
 
 #### 5、修改mysql密码：
 ##### 方法一：
+```sql
 mysqladmin -uroot -p'123' password 'new_password';
+```
+
+
 
 ##### 方法二：
+```sql
 UPDATE mysql.user SET authentication_string=password(‘new_password’) WHERE user=’root’ AND host=’localhost’;   
+```
+
+```sql
 FLUSH PRIVILEGES; 
+```
+
+
+
 ##### 方法三：
-登录到自己的账号，输入  SET PASSWORD=password(‘new_password’); 
+
+登录到自己的账号，输入 ：
+
+```sql
+SET PASSWORD=password(‘new_password’); 
+```
 
 #### 6、查看权限：
-管理员查看他人权限----SHOW GRANTS FOR admin1@'%'\G
+管理员查看他人权限：
+
+```sql
+SHOW GRANTS FOR admin1@'%'\G
+```
+
 #### 7、回收权限：
-REVOKE 权限列表 ON 数据库名 FROM 用户名@‘客户端主机’ ;  
+>  REVOKE 权限列表 ON 数据库名 FROM 用户名@‘客户端主机’ ;  
 
 ##### 例如：
 REVOKE DELETE ON *.* FROM admin1@’%’; //回收delete权限   

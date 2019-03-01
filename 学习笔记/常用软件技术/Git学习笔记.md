@@ -90,10 +90,11 @@ git中，如果需要创建分支，
 输入命令 : **git branch [分支名]**   例如：  git branch hot_fix
 #### 3、切换使用分支
 git中，如果需要切换到其他分支，
-输入命令：** git checkout [分支名字]**  例如 ：  git checkout hot_fix
+输入命令：**git checkout [分支名字]**  例如 ：  git checkout hot_fix
+
 #### 4、合并分支
 git中，如果两个分支之间需要合并（将 A 分支的内容合并到 B 分支上面），那么：  
-##### 步骤：  
+##### 步骤：  	
 1）进入到需要被合并的分支(进入到B分支)  
 2）输入命令 ： git merge [分支名字]  例如： git merge A
 
@@ -191,7 +192,7 @@ sudo EXTERNAL_URL="http://gitlab.example.com" yum -y install gitlab-ce
 ### 八、Linux安装git客户端
 #### 1、安装编译 git 时需要的包 
 
-```
+```shell
 yum install -y curl-devel expat-devel gettext-devel openssl-devel zlib-devel 
 yum install -y gcc perl-ExtUtils-MakeMaker
 ```
@@ -211,7 +212,7 @@ tar -zxvf git-2.9.3.tar.gz
 
 #### 4、进入解压目录以后，编译安装 
 
-```
+```shell
 1）make prefix=/usr/local/git all
 2）make prefix=/usr/local/git install 		
 3）echo "export PATH=$PATH:/usr/local/git/bin">>/etc/bashrc 

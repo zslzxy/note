@@ -27,9 +27,10 @@
 ### 1、volatile关键字  内存可见性
 
 **简介：**  
-> java语言提供了一种稍弱的同步机制，就是volatile变量。主要是用来确保变量更新操作会通知到其他线程，确保变量更新到主内存中，以及每次使用前都是从主内存中刷新数据。当把变量声明为volatile类型后,编译器与运行时都会注意到这个变量是共享的。volatile修饰变量,每次被线程访问时强迫其从主内存重读该值,修改后再写回。保证读取的可见性,对其他线程立即可见。
+> ​	java语言提供了一种稍弱的同步机制，就是volatile变量。主要是用来确保变量更新操作会通知到其他线程，确保变量更新到主内存中，以及每次使用前都是从主内存中刷新数据。当把变量声明为volatile类型后,编译器与运行时都会注意到这个变量是共享的。volatile修饰变量,每次被线程访问时强迫其从主内存重读该值,修改后再写回。保证读取的可见性,对其他线程立即可见。
 
 **1）内存可见性产生的原因：**
+
 > 当一个共享数据再被两个线程同时使用的时候，当一个线程将共享数据修改以后，另一个线程无法知道共享数据已经发生了变化。   
 
 **2）解决内存可见性，保证数据同步的方法：**
@@ -50,6 +51,7 @@
 >- volatile不能够保证变量的“原子性”。  
 
 **5）原子变量---原子变量与volatile相结合保证内存的可见性**  
+
 > **简介：**
 原子变量是在java.util.courrent.atomic包下提供了原子变量类型，都是使用了 volatile 关键字修饰和采用了 CAS 算法，来实现内存的可见性问题与保证原子性问题。  
 **CAS（Compare and Swap）算法：比较与替换的意思**
@@ -67,6 +69,7 @@ CAS 算法是对并发操作的共享数据的一种保证原子性的方法。 
 在Java中，多个线程操作共享数据的时候，会导致一些意外的数据产生，不符合数据的一致性规范。在java.util.current.atomic包下的原子变量，能够提供线程高效，线程安全的操作。
 
 **原子变量的类型：**  
+
 - AtomicBoolean 
 - AtomicInteger 
 - AtomicIntegerArray 
@@ -88,10 +91,8 @@ CAS 算法是对并发操作的共享数据的一种保证原子性的方法。 
 **原子变量使用方法：**  
 ```java 
 public class TestAtomicDemo {
-
 	public static void main(String[] args) {
 		AtomicDemo ad = new AtomicDemo();
-		
 		for (int i = 0; i < 10; i++) {
 			new Thread(ad).start();
 		}
@@ -142,15 +143,15 @@ class AtomicDemo implements Runnable{
 **需要上锁的**，一个线程独占一个段，来对数据进行写的操作。
 
 **4）ConcurrentHashMap迭代器：**
-> concurrentHashMap使用的 是不同于创痛迭代器的另一种方式，称为**弱迭代器**。当iterator被创建以后集合发生改变，不会抛出ConcurrentModificationException，取而代之的是改变数据时，是new出来的新的数据，对之前的数据不会有影响，iterator完成后再将头指针替换为新的数据。这样子，能够让iterator线程使用原来的老数据，而写线程也能够并发的执行。提高多个线程的连续性和扩展性。
+> concurrentHashMap使用的 是不同于通常迭代器的另一种方式，称为**弱迭代器**。当iterator被创建以后集合发生改变，不会抛出ConcurrentModificationException，取而代之的是改变数据时，是new出来的新的数据，对之前的数据不会有影响，iterator完成后再将头指针替换为新的数据。这样子，能够让iterator线程使用原来的老数据，而写线程也能够并发的执行。提高多个线程的连续性和扩展性。
 
 
 ### 3、CountDownLatch 闭锁  与 CyclicBarrier 
 **1）CountDownLatch简介：**  
 > 在完成一组正在执行其他线程中的执行的操作之前，它允许一个或者多个线程进入等待状态。简单来说就是能够将部分操作放置在**其他线程执行完毕以后**再执行。  
 
-
 **2）CountDownLatch功能：**  
+
 >- 闭锁能够延迟线程进度直到其到达终止状态。
 >- 闭锁能够用来确保其他活动完成以后才继续执行锁里面的操作，比如：  
     >   - 确保某个计算在其所需的所有资源都已经被初始化之后才执行。
@@ -235,6 +236,7 @@ class LatchDemo implements Runnable{
 也就是说：N个线程互相等待，任何一个线程完成之前，所有线程都必须等待。在最后一个未await之前，所有N个线程都不算完成，都处于阻塞状态。
 
 **实现代码：**  
+
 ```java
 public class Snippet {
 	
@@ -354,6 +356,7 @@ class ThreadDemo1 implements Callable<Integer>{
 
 ### 5、Lock 同步锁---保证多线程安全性问题
 **1）简介：**  
+
 > Lock 同步锁是一个显式锁，是一种更加灵活的方式来保证线程的安全性问题。它需要通过手动的调用 lock() 方法来进行上锁，手动的调用 unlock() 方法来进行解锁。  
 
 **Lock的实现类：**  
@@ -411,6 +414,7 @@ class Ticket implements Runnable{
 > Lock的线程间的等待唤醒机制的控制，是对应着Condition中的await、signal 和signalAll三大方法，分别对应着wait、notify 和notifyAll三大方法。可以用于线程之间的通信。  
 
 **2）使用方法：**
+
 > 在创建Lock锁对象以后，调用newCondition()方法来创建Condition对象，实现对await、signal 和signalAll方法的调用。  
 
 
