@@ -466,10 +466,11 @@ public Callable<String> async01()
 ### 十四、SpringMVC异常处理器
 #### 方法一：使用 @ExceptionHandler 注解来实现异常的处理。
 ##### 特点：
-@ExceptionHandler 只能够写在Handle中，之鞥能够处理当前Handle中抛出的异常，不是一个全局异常处理。
+@ExceptionHandler 只能够写在Handle中，只能够处理当前Handle中抛出的异常，不是一个全局异常处理。
 **代码为：**
 ​	
-```
+
+```java
 @ExceptionHandler({ArithmeticException.class,
 						RuntimeException.class})
 	public ModelAndView handleExecption(Exception ex) {
@@ -496,7 +497,7 @@ public Callable<String> async01()
 
 **代码为：**
 
-```
+```java
 @ControllerAdvice
 public class HandleExecption {
 	@ExceptionHandler({ArithmeticException.class})
@@ -527,7 +528,7 @@ public class HandleExecption {
 
 **代码为：**
 
-```
+```java
 @RestControllerAdvice
 public class HandleExecption {
 

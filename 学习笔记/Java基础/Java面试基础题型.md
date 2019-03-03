@@ -661,3 +661,40 @@ String str2 = new String(str1.getBytes(GB2312),"ISO-8859-1");
 - 在Java中，final表示的是最终的意思，不能够被修改、不能够被重写。
 - 在Java中，abstract表示抽象的意思，抽象方法必须要被重写、实现。
 - 所以，java中的final与abstract关键字不能够在一起使用。
+
+### 64、Java数组支持泛型吗？
+
+- java中国的数组不支持泛型操作。
+
+### 65、List<Object> 与List<String> 
+
+```java
+		List<String> listStr = new ArrayList<String>();
+		List<Object> listObj = new ArrayList<Object>();
+
+		listStr.add("张世林大帅哥");
+		//正常运行
+ 		listObj.addAll(listStr);
+		//编译就出现错误了
+		listObj = listStr;
+```
+
+### 66、java优化细节
+
+- 尽量使用单例设计模式，控制资源的产生于并发访问。
+- 尽量避免随意使用静态变量。静态变量是随着类的加载就加载，类的卸载才卸载。
+- 尽量使用final修饰符。
+- 尽量在不变的地方使用final进行修饰。使用final进行修饰的话，编译器会在何时的机会内联（inline）所有的fianl方法，提高性能。比如使用final修饰 getter/setter方法。
+- 尽量使用局部变量，局部变量是创建在stack中的变量，速度快。
+- 合理的指定创建的HashMap的初始化大小。
+- 尽量避免计算相同的计算式。例如：循环中 list.size() 不要每一次都去计算。
+- 尽量避免不必要的对象的创建。
+- 尽量在finally中释放资源。
+- 尽量使用位运算来代替一些除法、乘法。例如： 8/2 可以换成  8 >> 1 
+- 尽量避免使用二维数组，二维数组消耗过大。
+- 尽量使用**`System.arraycopy()`** 方法来进行copy数组。
+- 尽量缓存经常用的对象。
+- 尽量避免非常大的内存分配。
+- 尽量避免创建太多对象。如果对象过多，可以再不需要的地方手动设置为null，让jvm去进行回收。
+- try-catch尽量放在最外层的循环中。
+- 

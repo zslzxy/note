@@ -4,11 +4,11 @@
 
 #### 1、面向对象的思想
 
-> 面向对象是相对于面向过程而言的，面向过程，强调的是功能行为，是一种以过程为中心的编程思想。  
+> ​	面向对象是相对于面向过程而言的，面向过程，强调的是功能行为，是一种以过程为中心的编程思想。  
 >
-> 面向对象主要是将事物进行对象化，而对象包括了事物的属性与方法，是一种以对象为中心的编程思想。例如：正常的大象进冰箱而言，冰箱使一个类，类里面具有开门、关门的两个方法；大象是一个类，类里面有进入冰箱的方法。正常面向对象而言，就是先创建两个类的对象，在调用对象的方法来实现功能。   
+> ​	面向对象主要是将事物进行对象化，而对象包括了事物的属性与方法，是一种以对象为中心的编程思想。例如：正常的大象进冰箱而言，冰箱使一个类，类里面具有开门、关门的两个方法；大象是一个类，类里面有进入冰箱的方法。正常面向对象而言，就是先创建两个类的对象，在调用对象的方法来实现功能。   
 >
-> 面向对象更加符合人类日常生活逻辑的方法与原则，具有抽象、封装、继承、多态等。
+> ​	面向对象更加符合人类日常生活逻辑的方法与原则，具有抽象、封装、继承、多态等。
 
 ---
 
@@ -140,6 +140,7 @@ native ： java语言使用native的方法是来实现对底层的操作。
 #### 1）重载
 介绍： 在同一个类里面，和方法名相同，且方法的参数不同（参数的个数或者参数的类型）的类里面的方法就叫重载。
 注意： 方法的重载有方法的返回值没有关系。
+
 #### 2）重写
 介绍： 在继承了父类以后，子类得到了父类的所有功能，在某些情况下父类的某一些功能不适用于子类，就可以将父类的某一些方法进行重写，方法名相同，内容进行修改。  
 
@@ -275,7 +276,7 @@ Class clazz3 = Class.forName("com.zsl.pojo.Person");
 
 **方式4：通过类加载器获取。**
 
-```
+```java
 ClassLoader classLoader = this.getClass().getClassLoader();
 Class clazz4 = classLoader.loadClass("com.zsl.pojo.person");
 ```
@@ -284,7 +285,7 @@ Class clazz4 = classLoader.loadClass("com.zsl.pojo.person");
 ### 6、调用Class，创建运行时类对象：
 **方法： 调用 Class 的 newInstance() 方法------使用无参构造器**
 
-```
+```java
 Object obj = class.newInstance();
 ```
 
@@ -295,20 +296,20 @@ Object obj = class.newInstance();
 #### 1）获取运行时类的属性：
 **方法1：获取运行时类本身所有属性**  
 
-```
+```java
 Class class1 = Person.class;
 Field[] filed = class1.getDeclaredFields();  //所有属性存到了 Field数组 里面
 ```
 
 **方法2：获取运行时类及其父类的所有生命为public的属性**
 
-```
+```java 
 Field[] field = class1.getFields();  //所有属性存到了 Field数组 里面
 ```
 
 **获取属性的各种信息(属性的权限修饰符，变量类型，变量名)：**
 
-```
+```java
 Field[] filed = class1.getDeclaredFields();
 for(Field ss : field){
 // 1）获取属性的权限修饰符
@@ -322,14 +323,14 @@ String str1 = ss.getType();
 #### 2）获取运行时类的方法：
 **方法1：获取运行时类本身与其父类所有的生命为public方法：**
 
-```
+```java
 Class class1 = Person.class;
 Method[] mth = class1.getMethods();
 ```
 
 **方法2：获取运行时类本身的所有方法:**
 
-```
+```java
 Method[] mth = class1.getDeclaredMethods();
 获取方法的各种信息(属性的权限修饰符，返回类型，形参等)：
 Method[] mth = class1.getDeclaredMethods();
@@ -347,7 +348,7 @@ String sls = ss.getReturnType().toString();
 
 #### 3）获取运行时类的构造器：
 
-```
+```java
 Class class1 = Person.class;
 Constructor[] cst = class1.getDeclaredConstructors();
 ```
@@ -356,7 +357,7 @@ Constructor[] cst = class1.getDeclaredConstructors();
 
 **调用运行时类的指定的属性：**
 
-```
+```java
 Class class1 = Person.class;
 Person p = class1.newInstance();
 //  Field name = class1.getField("name");  //获得Person的name属性（必须为public的权限）
@@ -368,7 +369,7 @@ name.set(p,"张世林");  //为name属性赋值
 
 **调用运行时类的指定的方法：**
 
-```
+```java
 Class class1 = Person.class;
 Person p = class1.newInstance();
 Method met = class1.getMethod("show");  //指定到Person的show方法
@@ -1386,6 +1387,8 @@ java.lang.StringBulider，可变序列的字符串，对字符串进行增删，
 
 #### 1、集合的关系图
 
+![1551248564626](assets/1551248564626.png)
+
 ![image](https://note.youdao.com/yws/api/personal/file/7DEC4AF8A7034C5D9BE0C1A07B4E5C57?method=download&shareKey=63a731bd05d8124e000cd8de1d3499b0)
 
 
@@ -1521,7 +1524,6 @@ LinkedList是List接口的实现类，是基于双向链表实现的。所以对
 
 ![image](https://note.youdao.com/yws/api/personal/file/22460597B89F4ECDBEEB82A4EB2BD9E9?method=download&shareKey=de22d84b8dade3207204d803314a22ac)  
 
-
 **3）LinkedList数据结构原理：**  
 
 ![image](https://note.youdao.com/yws/api/personal/file/D41ECB974CE04C70BF64D2B836D20D13?method=download&shareKey=cd90ac3cd7e01f718735c488abc48043)   
@@ -1529,7 +1531,22 @@ LinkedList是List接口的实现类，是基于双向链表实现的。所以对
 
 ![image](https://note.youdao.com/yws/api/personal/file/F1C3DE023FC0421BB3FC3A897EB82BE4?method=download&shareKey=ff82efb45773c8db027a22afd5bacfe4)   
 
+**4）CopyOnWriteArrayList读写分离**
 
+​	功能是：
+
+- 读操作还是在原来的集合（数组）上面进行读取；
+
+- 写的操作则是将集合进行复制一份完整的数据，对复制的数据上锁以后，进行写的操作。
+
+  使用场景：
+
+- 使用CopyOnWriteArrayList在写的操作的同事允许读的操作，有效的提升了并发性能问题。
+
+  使用缺陷：
+
+- 内存占用：当写的操作时需要复制一个新的集合对象，使内存占用是原来的两倍。
+- 数据不一致：写的操作与读的集合对象不是同一个，不能够保证数据的实时性同步，所以不适合内存敏感以及对实时性要求很高的场景。
 
 #### 7、Set接口---HashSet实现类（主要的Set实现类，存储无序，数据不可重复）
 

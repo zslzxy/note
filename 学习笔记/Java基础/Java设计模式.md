@@ -64,13 +64,13 @@ Memento 备忘录模式：在不破坏前提的情况下，捕获一个对象的
 
 ## 二、设计模式遵循的六大原则
 #### 总原则：开闭原则
-对扩展开放，对修改关闭。程序在需要扩展的是时候，不去修改源代码，而是去执行源代码的扩展，实现一个热插拔的效果。
+​	对扩展开放，对修改关闭。程序在需要扩展的是时候，不去修改源代码，而是去执行源代码的扩展，实现一个热插拔的效果。
 
 #### 1、单一职责原则
 每个类应该实现单一的职责(功能)，如果不然，需将这个类进行拆分。
 
 #### 2、里氏替换原则(LSP)
-里氏替换原则是面向对象设计的基本原则之一。里氏替换原则的中定义，任何类可以出现的地方，子类一定可以出现。LSP是继承复用的基石，只有当延伸类可以替换掉基类，且软件功能不受影响的情况下，基类才能实现真正的复用。相当于是 开闭原则 的补充。
+​	里氏替换原则是面向对象设计的基本原则之一。里氏替换原则的中定义，任何类可以出现的地方，子类一定可以出现。LSP是继承复用的基石，只有当延伸类可以替换掉基类，且软件功能不受影响的情况下，基类才能实现真正的复用。相当于是 开闭原则 的补充。
 #### 3、依赖倒转原则
 体现在面向接口编程，依赖与抽象类而不依赖于具体的实现类。写代码需要用到具体的实现类，可直接依赖接口进行交互。
 #### 4、接口隔离原则
@@ -385,15 +385,15 @@ public class SingleDemo2 {
 ```
 
 
-### 4、建造者模式
-#### 简介：
+### 4 建造者模式
+#### 4.1 简介：
 建造者模式是使用多个简单的对象来一步步的创建一个复杂的对象。它提供了一种非常优雅的创建对象的方式。  
 也就是说，一个Builder类会一步一步构造最终的对象，该Builder类是独立于其他对象的。
 
-#### 使用场景：
+#### 4.2 使用场景：
 主要是将一个复杂的构建过程拆分，当一个构建过程会经常面临着变化的元素，使用构造者模式将其组合起来的话，能够实现相同的构建也能构建出不同的表示。例如：肯德基的食谱不会变，但是各项菜单的组合是经常变换的。
 
-#### 代码执行：
+#### 4.3 代码执行：
 步骤 1  
 创建一个表示食物条目和食物包装的接口。
 
@@ -629,24 +629,41 @@ Total Cost: 85.5
 ```
 
 
-### 5、代理模式
-#### 简介：
-一个类代表另外一个类的功能。也就是在代理类中创建被代理类对象，来实现在代理类中对被代理类的方法的调用。
+### 5 代理模式
+#### 5.1 简介：
+>  	一个类代表另外一个类的功能。也就是在代理类中创建被代理类对象，来实现在代理类中对被代理类的方法的调用。
 
-#### 优缺点：
-##### 优点：
-- 职责清晰，高扩展性、智能化。
-- 能够在一定的情况下，提供一部分的安全控制等。
+#### 5.2 概念：
 
-##### 缺点：
-- 客户端与真实主题之间增加了代理对象，因此有些类型的代理模式会变慢。
+- 真实对象：需要进行功能扩展的对象。
+- 真实方法：需要进行功能扩展的方法。
+- 代理对象：功能扩展以后的对象。
+- 代理方法：功能扩展以后的方法。
 
-#### 代码操作一：
+#### 5.3 优缺点：
+
+> - **优点**：
+>   - 职责清晰，高扩展性、智能化。能够在不修改源码的基础之上完成功能扩展。
+>   - 能够在一定的情况下，提供一部分的安全控制等。
+>
+> - **缺点**：
+>   - 客户端与真实主题之间增加了代理对象，因此有些类型的代理模式会变慢。
+
+#### 5.4 静态代理
+
+> ​	 由程序员自己编写的代理对象与代理方法称为静态代理方法。
+>
+> ​	代理设计模式中，能够在不修改真实方法的源码基础之上进行功能的扩展，但是我们的需要改变调用方式由直接调用真实对象转换为直接调用代理对象，再由代理对象去调用真实对象，实现一个功能扩展的功能。**通常情况下，代理方法与真实方法的设计，形参与返回值是与源代码的形参与返回值相同的。** 可以进行规范性的操作：
+>
+> - 代理方法与真实方法实现相同的接口。
+> - 代理方法继承真实方法。
+
+##### 5.4.1 代码操作一：
 步骤 1  
 创建一个接口。
 
 
-```
+```java
 Image.java
 public interface Image {
 void display();
@@ -657,7 +674,7 @@ void display();
 创建实现接口的代理对象与被代理对象。
 
 
-```
+```java
 RealImage.java
 public class RealImage implements Image {
     private String fileName;
@@ -676,7 +693,7 @@ public class RealImage implements Image {
 ```
 
 
-```
+```java
 ProxyImage.java
 public class ProxyImage implements Image{
     private RealImage realImage;
@@ -698,7 +715,7 @@ public class ProxyImage implements Image{
 当被请求时，使用 ProxyImage 来获取 RealImage 类的对象。
 
 
-```
+```java
 ProxyPatternDemo.java
 public class ProxyPatternDemo {
     public static void main(String[] args) {
@@ -712,11 +729,11 @@ public class ProxyPatternDemo {
 }
 ```
 
-#### 代码操作二：
+##### 5.4.2 代码操作二：
 
 1）创建接口
 
-```
+```java
 public interface Sourceable {  
     public void method(); 
     
@@ -725,7 +742,7 @@ public interface Sourceable {
 
 2）创建被代理类  
 
-```
+```java
 public class Source implements Sourceable {
     @Override
      public void method() {
@@ -736,26 +753,210 @@ public class Source implements Sourceable {
 
 3）创建代理类，里面创建被代理类的对象。
 
-```
+```java
 public class Proxy implements Sourceable {
     private Source source;
     public Proxy(){
-    super();
-    this.source = new Source();
+    	super();
+    	this.source = new Source();
     }
     @Override
     public void method() {
-    before();
-    source.method();
+    	before();
+    	source.method();
     }
     private void before() {
-    System.out.println("before proxy!");
+    	System.out.println("before proxy!");
     }
 }
 ```
 
+#### 5.5 jdk动态代理--基于接口
+
+##### 5.5.1 基本介绍
+
+> - **java.lang.reflect.Proxy** ：用于创建代理对象。
+> - **InvocationHandler**：JDK动态代理动态创建的代理对象须要实现这个接口。
+
+##### 5.5.2 实现流程
+
+> - 创建一个实现了InvocationHandler接口，并重写了 invoke 方法，实现代理的功能。
+> - 使用Proxy调用其newProxyIntance() 方法完成代理对象和代理方法的动态生成。
+> - 调用动态生成的代理对象来代理完成业务操作。
+
+##### 5.5.3 代码实现
+
+第一步
+
+创建实现真实功能需要的接口：
+
+```java
+public interface Gongneng {
+	void eat();
+}
+```
+
+第二步：创建真实功能的实现：
+
+```java
+public class Boss implements Gongneng {
+	public void eat() {
+		System.out.println("这里是老板吃饭的功能");
+	}
+}
+```
+
+第三步：创建需要扩展的功能：
+
+```java
+public class Before {
+	public void before() {
+		System.out.println("前置before方法");
+	}
+}
+
+public class After {
+	public void after() {
+		System.out.println("后置after方法");
+	}
+}
+```
+
+第四步
+
+自定义动态代理的方法：
+
+```java
+public class JDKProxy implements InvocationHandler {
+	/**
+	 * 自定义动态代理的方法
+	 * Object proxy : 代理对象。
+	 * Method method ： 接口类型的切点方法。
+	 * Object[] args ：代理方法接收的实参的数组。
+	 * return ：一般直接返回真实业务逻辑完成以后的返回值。
+	 */
+	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		//前置方法
+		Before before = new Before();
+		before.before();
+		
+		//真正的业务逻辑
+		Gongneng gongneng = new Boss();
+		gongneng.eat();
+		
+		//后置方法
+		After after = new After();
+		after.after();
+		return null;
+	}
+}
+```
+
+第五步
+
+实现动态代理测试类
+
+```java
+import java.lang.reflect.Proxy;
+
+public class TestProxy {
+	public static void main(String[] args) {
+		Gongneng gongneng = (Gongneng)Proxy.newProxyInstance(TestProxy.class.getClassLoader(),
+				new Class[] {Gongneng.class}, new JDKProxy());
+		gongneng.eat();
+	}
+}
+```
+
+#### 5.6 Cglib动态代理--基于继承
+
+##### 5.6.1 基本介绍
+
+> ​	Cgilb是基于继承实现的，底层是基于字节码文件反向动态生成代理对象的。是一种第三方包提供的动态代理方式。
+
+##### 5.6.2 代码实现
+
+第一步
+
+创建实现真实功能需要的接口：
+
+```java
+public interface Gongneng {
+	void eat();
+}
+```
+
+第二步：创建真实功能的实现：
+
+```java
+public class Boss implements Gongneng {
+	public void eat() {
+		System.out.println("这里是老板吃饭的功能");
+	}
+}
+```
+
+第三步：创建需要扩展的功能：
+
+```java
+public class Before {
+	public void before() {
+		System.out.println("前置before方法");
+	}
+}
+
+public class After {
+	public void after() {
+		System.out.println("后置after方法");
+	}
+}
+```
+
+第四步
+
+创建Cglib动态代理的类
+
+```java
+public class CgilbProxy implements MethodInterceptor {
+	public Object intercept(Object arg0, Method arg1, Object[] arg2, MethodProxy arg3) throws Throwable {
+		//前置方法
+		Before before = new Before();
+		before.before();
+		
+		//真正的业务逻辑
+		Boss boss = new Boss();
+		boss.eat();
+		
+		//后置方法
+		After after = new After();
+		after.after();
+		return null;
+	}
+}
+```
+
+第五步：测试调用
+
+```java
+import net.sf.cglib.proxy.Enhancer;
+
+public class TestCglib {
+	public static void main(String[] args) {
+		//設置cglib的翻譯對象
+		Enhancer en = new Enhancer();
+		//設置需要继承的真实对象
+		en.setSuperclass(Boss.class);
+		//设置代理对象需要回调的方法
+		en.setCallback(new CgilbProxy());
+		//创建并返回创建出来的代理对象
+		Boss boss = (Boss) en.create();
+		boss.eat();
+	}
+}
+```
 
 ### 6、外观模式
+
 #### 简介：
 外观模式是隐藏系统的复杂性，并向客户端提供了一个可以访问的系统的类型的接口，这样的设计就是外观模式。主要是用于屏蔽系统内部的复杂性。  
 这种模式涉及到一个单一的类，该类提供了客户端请求的简化方法和对现有系统类方法的委托调用。
