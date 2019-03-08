@@ -324,5 +324,442 @@ public class Consumer {
 
 ## 三 客户端开发
 
-​	
+### 1 连接RabbitMQ
 
+#### 1.1 参数连接
+
+```java
+	public static ConnectionFactory getConnectionFactory() {
+		com.rabbitmq.client.ConnectionFactory connectionFactory = new com.rabbitmq.client.ConnectionFactory();
+		connectionFactory.setHost(IP_ADDRESS);
+		connectionFactory.setPort(PORT);
+		connectionFactory.setUsername(USERNAME);
+		connectionFactory.setPassword(PASSWORD);
+		return connectionFactory;
+	}
+
+	public static Connection getConnection() throws IOException, TimeoutException {
+		Connection connection = getConnectionFactory().newConnection();
+		return connection;
+	}
+```
+
+#### 1.2 URL连接
+
+```java
+ConnectionFactory factory = new ConnectionFactory();
+factory.setUri( "amqp:lluserName:password@ipAddress:portNumber/virtualHost");
+Connection conn = factory.newConnection();
+Channel channel = conn.createChannel();
+```
+
+#### 1.3 连接异常
+
+- **ShutdownSignalException**--当Channel 或者 Connection连接处于关闭的时候，会抛出异常。
+
+- **IOException**--避免connection连接意外关闭。
+- **SocketException**--避免Socket意外关闭连接。
+
+#### 1.4 验证连接
+
+> 使用 RabbitMQ提供的 isOpen() 方法来检测Channel或者Connection是否正确开启。
+
+```java
+//isOpen() 方法源码
+public boolean isOpen() {
+    synchronized(this.monitor) {
+        return this.shutdownCause == null;
+    }
+}
+```
+
+注意：通常情况下，无需验证Channel 和 Connection 是否正确的连接，只需要进行对应的异常捕获即可。
+
+### 2 Exchange、Queue、Bind
+
+#### 2.1 交换机--Exchange
+
+##### 2.1.1 创建交换机
+
+​	exchangeDeclare() 方法具有多个重载方法，浙西从在方法都是由下面则个方法中的雀神的某一些参数构成的。方法源码为：
+
+```java
+    Exchange.DeclareOk exchangeDeclare(String exchange,
+                                              String type,
+                                              boolean durable,
+                                              boolean autoDelete,
+                                              boolean internal,
+                                              Map<String, Object> arguments) throws IOException;
+```
+
+-  **`Exchange.DeclareOk`** 方法返回值，用于标识成功创建了一个交换器。
+- **`exchange`** 交换器的名称。
+- **`type`** 交换器的类型，在重载方法里面有枚举对象(**BuiltinExchangeType**)作为参数。
+
+- **`durable`** 设置是否持久化。
+  - true ： 表示将其设置为持久化的 Exchange。
+  - false：表示将其设置为非持久化分Exchange。
+- **`autoDelete`** 设置是否自动删除。
+  - true：表示设置为自动删除。自动删除的条件是：字少有一个队列或者交换机与该交换机进行绑定，之后所有的交换器绑定的队列或者交换器都与此交换器解绑。
+  - false：表示设置为不自动删除。
+- **`internel`** 设置是否是内置的。
+  - true：表示的是内置的交换器，客户端程序无法直接发送消息到这个交换器中，只能通过交换器路由到达交换器。
+  - false：表示客户端程序可以直接发送消息到这个交换器中。
+- **`arguments`** 其他一些结构化的参数，比如 alternate-exchaneg。
+
+##### 2.1.2 验证交换机是否存在
+
+​	exchangeDeclarePassive()方法能够**验证对应的交换器是否存在**。
+
+```java
+    /**
+     * Declare an exchange passively; that is, check if the named exchange exists.
+     * @param name check the existence of an exchange named this
+     * @throws IOException the server will raise a 404 channel exception if the named exchange does not exist.
+     */
+    Exchange.DeclareOk exchangeDeclarePassive(String name) throws IOException;
+```
+
+​	使用方式：
+
+```java
+/**
+ * 验证对应的 exchange 是否存在
+ * 		如果不存在，则抛出异常，且关闭channel
+ * 		如果存在，则正常返回
+ */
+AMQP.Exchange.DeclareOk declareOk =channel.exchangeDeclarePassive(EXCHANGE_NAME);
+```
+
+##### 2.1.3 删除Exchange
+
+​	删除Exchange交换机对应的三种方式：
+
+```java
+Exchange.DeleteOk exchangeDelete(String exchange, boolean ifUnused) throws IOException;
+
+void exchangeDeleteNoWait(String exchange, boolean ifUnused) throws IOException;
+
+Exchange.DeleteOk exchangeDelete(String exchange) throws IOException;
+```
+
+​	参数表示的含义为：
+
+- **`exchange`** 交换机的名称。
+- **`ifUnused`** 是否在交换机没有使用的情况下进行删除。
+  - true：只能够在交换机没有使用的情况下进行删除。
+  - false：无论什么情况下，都要对交换机进行删除操作。
+
+#### 2.2 队列--Queue
+
+##### 2.2.1 创建队列
+
+​	queueDeclare() 方法，用于创建对应的队列。
+
+```java
+/**
+* 默认创建一个有rabbitMQ自动命名的、排他的、自动删除的、非持久化的队列。
+*/
+Queue.DeclareOk queueDeclare() throws IOException;
+
+Queue.DeclareOk queueDeclare(String queue, 
+                             boolean durable, 
+                             boolean exclusive, 
+                             boolean autoDelete,
+                             Map<String, Object> arguments) throws IOException;
+
+```
+
+​	参数详情：
+
+- **`queue`** 队列的名称。
+- **`durable`** 设置是否进行持久化。
+  - true：将队列设置为持久化。
+  - false：将队列设置为非持久化。
+
+- **`exclusive`** 设置是否具有排他性。
+  - true：将其设置为队列排他性。表示的意思是该队列对首次声明它的连接可见，并在连接断开时自动删除。
+  - false：将其设置为非排他性。
+
+- **`autoDelete`** 设置是否自动删除。
+  - true：设置为自动删除。自动删除的前提是至少一个消费者连接到这个队列，之后所有与这个队列连接的消费者都断开时，才会自动删除。
+  - false：设置为不自动删除。
+
+- **`arguments`** 设置队列的一些对应的参数。
+
+  注意事项：
+
+> ​	生产者和消费者都能够使用 queueDeclare来声明一个队列，但是如果消费者在同一个信道上订阅了另外一个队列，则无法再次声明队列了。必须要先取消订阅，然后将信道设置为“传输”模式，之后才能声明队列。
+
+##### 2.2.2 验证队列是否存在
+
+​	使用 queueDec1arePassive() 方法能够验证队列是否存在。
+
+```java
+Queue.Dec1areOk queueDec1arePassive(String queue) throws IOException;
+```
+
+##### 2.2.3 删除队列
+
+```java
+Queue.DeleteOk queueDelete(String queue) throws IOException;
+
+Queue.DeleteOk queueDelete(String queue, boolean ifUnused, boolean ifEmpty) throws IOException;
+
+void queueDeleteNoWait(String queue, boolean ifUnused, boolean ifEmpty) throws IOException;
+
+```
+
+​	参数说明：
+
+- **`queue`** 需要删除的队列。
+- **`ifUnused`** 设置是否队列在使用的情况下进行删除。
+  - true：队列没有使用的情况下才能够进行删除的操作。
+  - false：直接删除队列，无论队列是否正在使用。
+
+- **`ifEmpty`** 设置是否队列为空才删除。
+  - true：必须队列为空以后，才能够进行删除。
+  - false：无论队列是否为空，都可以进行删除。
+
+##### 2.2.4 清空队列
+
+​	清空队列中的内容信息，而不删除队列本身。
+
+```java
+Queue.PurgeOk queuePurge(String queue) throws IOException;
+```
+
+#### 2.3 绑定--queueBind
+
+##### 2.3.1 绑定交换机与队列
+
+​	使用queueBind() 方法 将交换机Exchange与queue进行绑定的操作。
+
+```java
+Queue.BindOk queueBind(String queue, String exchange, String routingKey) throws IOException;
+
+Queue.BindOk queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments) throws IOException;
+
+void queueBindNoWait(String queue, String exchange, String routingKey, Map<String, Object> arguments) throws IOException;
+```
+
+​	参数介绍：
+
+- **`queue`** 队列名称。
+- **`exchange`** 交换器的名称。
+- **`routingKey`** 用于绑定队列和交换器的路由键。
+- **`argument`** 定义绑定的一些对应的参数。
+
+##### 2.3.2 解绑交换机与队列
+
+​	使用queueUNBind() 方法能够实现队列与交换机的解绑。
+
+```java
+Queue.UnbindOk queueUnbind(String queue, String exchange, String routingKey) throws IOException;
+  
+Queue.UnbindOk queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments) throws IOException;
+
+```
+
+#### 2.4 绑定--exchangeBind
+
+​	不仅可以将队列与交换机进行绑定，也能够使用交换机与交换机进行绑定。
+
+```java
+Exchange.BindOk exchangeBind(String destination, String source, String routingKey) throws IOException;
+
+Exchange.BindOk exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments) throws IOException;
+
+void exchangeBindNoWait(String destination, String source, String routingKey, Map<String, Object> arguments) throws IOException;
+
+```
+
+​	示例代码为：
+
+```java
+channel.exchangeDeclare( " source " , "direct " , false , true , null) ;
+channel.exchangeDeclare( "destination " , " fanout " , false , true , null );
+channel.exchangeBind( "destination " , "source " , "exKey");
+channel.queueDeclare( "queue " , false , false , true , null );
+channel.queueBind( " queue " , " dest 工nation " ， "" ) ;
+channel.basicPublish( "source " , "exKey" , nu l l , "exToExDemo ". getBytes ()) ;
+```
+
+### 3 发送消息
+
+#### 3.1 发送消息方法
+
+​	使用 Channel类中的 basicPublish() 方法，进行消息的发送操作。
+
+```java
+void basicPublish(String exchange, 
+                  String routingKey, 
+                  BasicProperties props, 
+                  byte[] body) throws IOException;
+
+void basicPublish(String exchange, 
+                  String routingKey, 
+                  boolean mandatory, 
+                  BasicProperties props, 
+                  byte[] body) throws IOException;
+
+void basicPublish(String exchange, 
+                  String routingKey, 
+                  boolean mandatory, 
+                  boolean immediate, 
+                  BasicProperties props, 
+                  byte[] body) throws IOException;
+
+```
+
+​	参数说明：
+
+- **`exchange`** 交换机
+- **`routingKey`** 路由键
+- **`mandatory`** 
+- **`immediate`**
+- **`props`**
+- **`body`**
+
+#### 3.2 消息发送
+
+​	（**重点代码**）发送消息，使用的是channel对应的basicPublish()方法，代码示例：
+
+```java
+Map<String,Object> map = new HashMap<String,Object>();
+map.put("localtion", "here");
+map.put("time","today");
+channel.basicPublish(EXCHANGE_NAME,	ROUTING_KEY, new AMQP.BasicProperties()
+                     .builder()
+                     //设置对应的headers
+                     .headers(map)
+                     //消息类型属性
+                     .contentType("text/plain")
+                     //设置消息是否持久化
+                     //	2 表示的是将消息进行持久化。
+                     .deliveryMode(2)
+                     //设置消息优先级为1
+                     .priority(1)
+                     //设置消息过期时间
+                     .expiration("60000")
+                     .build(),
+                     message.getBytes());
+
+```
+
+### 4 消费消息
+
+#### 4.1 消费模式
+
+​	在RabbitMQ中的消费，主要是分为两种：**推（Push）模式和拉（Pull）模式**。
+
+- 推模式采用的是Basic.Consume进行消费。
+- 拉模式采用的是Basic.Get进行消费。
+
+#### 4.2 推模式
+
+##### 4.2.1 基本介绍
+
+​	在推模式中，可以使用持续订阅的方式来进行消息消费，使用到的相关类：
+
+- `com.rabbitmq.client.Consumer`
+
+- `com.rabbitmq.client.DefaultConsumer`
+
+  接受消息通常是采用两种方式：
+
+- 实现 Consumer接口。
+
+- 竭诚DefaultConsumer类。
+
+  在调用Consumer相关的API方法时，不同的订阅采用的是不同的消费者标签(`consumerTag`)来进行区分。同一个Channel中的消费者也需要通过唯一的消费者标签来进行区分操作。
+
+##### 4.2.2 方法重载
+
+```java
+String basicConsume(String queue, 
+                    boolean autoAck, 
+                    String consumerTag, 
+                    boolean noLocal, 
+                    boolean exclusive, 
+                    Map<String, Object> arguments, 
+                    DeliverCallback deliverCallback, 
+                    CancelCallback cancelCallback, 
+                    ConsumerShutdownSignalCallback shutdownSignalCallback) throws IOException;
+
+```
+
+​	参数介绍：
+
+- **`queue`** 队列名称
+- **`autoAck`** 设置是否自动确认，通常建议设置为false，不自动确认。
+- **`consumerTag`** 消费者标签，用于区分多个消费者。
+- **`noLocal`** 设置为true，表示不能够将同一个Connection中生产者发送的消息传递给这个Connection的消费者。
+- **`exclusive`** 设置是否排他。
+- **`arguments`** 设置一些必要的参数。
+- **`callback`** 设置消费者的回调函数，用于处理RabbitMQ推送过来的消息。
+
+##### 4.2.3 代码实现
+
+```java
+	public static void main(String[] args) throws IOException, TimeoutException {
+		Connection connection = ConnectionFactoryBean.getConnection();
+		Channel channel = connection.createChannel();
+		channel.basicQos(64);
+		boolean ask = false;
+		channel.basicConsume("test_queue", ask, "consumerTag",
+				new DefaultConsumer(channel) {
+					@Override public void handleDelivery(String consumerTag, 
+                                      Envelope envelope,
+									  AMQP.BasicProperties properties,
+									  byte[] body) throws IOException {
+						String routKey = envelope.getRoutingKey();
+						String contentType = properties.getContentType();
+						long deliveryTag = envelope.getDeliveryTag();
+                        //将ACK设置为false，能够显式的ack操作
+						channel.basicAck(deliveryTag, false);
+					}
+				});
+	}
+```
+
+#### 4.3 拉模式
+
+##### 4.3.1 基本介绍
+
+​	拉模式是通过 **`channel.basicGet`** 方法可以单条的获取信息，其返回值是GetResponse。调用方法为：
+
+```java
+GetResponse basicGet(String queue, boolean autoAck) throws IOException;
+```
+
+​	参数表示为：
+
+- **`queue`** 队列名称。
+- **`autoAck`** 是否自动确认消息接收成功。
+
+##### 4.3.2 代码示例
+
+```java
+public static void main(String[] args) throws IOException, TimeoutException {
+		Connection connection = ConnectionFactoryBean.getConnection();
+		Channel channel = connection.createChannel();
+		channel.basicGet("test_queue", false);
+	}
+```
+
+#### 4.4 消息确认
+
+​	为了保证消息从队列中可靠地达到消费者，RabbitMQ提供了确认消息机制（message ack）。
+
+- **`autoAck==false`**：**消费者订阅队列时，当autoAck等于false的时候，RabbitMQ会等待消费者显式的回复确认信号以后才从内存中移除消息。** 
+
+- **`autoAck==true`**：**当autoAck参数为true的时候，RabbitMQ会自动把发送出去的消息置位确认，然后直接从内存中进行删除。**
+
+  ​	采用消息确认机制，将其设置为false，消费者能够有足够的时间去处理消息（任务），不同担心消息处理过程中消费者进程挂掉易购消息丢失的问题，因为RabbitMQ会一直等待消息，直到收到消费者显式的返回的Basic.Ack为止。
+
+  **RabbitMQ不会为未确认的消息设置过期时间，它判断此消息是否需要重新投递给消费者的唯一依据就是消费该消息的消费者链接是否已经断开**，这么设计的原因是RabbitMQ允许消费者消费一条消息的时间很久很久。
+
+
+
+​	

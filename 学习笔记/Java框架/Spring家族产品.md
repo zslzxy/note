@@ -126,7 +126,7 @@ public class ColorFactoryBean implements FactoryBean<Color> {
 
 ##### 第二步：在config中调用工厂来创建Bean对象；
 
-```
+```java
 @Bean
 public ColorFactoryBean colorFactoryBean()
 {
@@ -134,8 +134,17 @@ public ColorFactoryBean colorFactoryBean()
 }
 ```
 
+#### 9 Assert断言
+
+> - notNull(Object object, "object is required")    -    对象非空 3hf  
+> - isTrue(Object object, "object must be true")   -    对象必须为true   
+> - notEmpty(Collection collection, "collection must not be empty")    -    集合非空  
+> - hasLength(String text, "text must be specified")   -    字符不为null且字符长度不为0   
+> - hasText(String text, "text must not be empty")    -     text 不为null且必须至少包含一个非空格的字符  
+> - isInstanceOf(Class clazz, Object obj, "clazz must be of type [clazz]")    -    obj必须能被正确造型成为clazz 指定的类
 
 ### 三、Bean的生命周期
+
 #### 1、Bean的生命周期历程：
 创建---》初始化---》销毁  
 #### 2、Bean的初始化：

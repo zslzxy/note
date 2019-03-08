@@ -873,40 +873,120 @@ semaphore.release();
 
 ```
 
-### 13、死锁
-#### 简介：
+### 13、死锁、活锁
+
+#### 13.1 死锁
+
+##### 13.1.1 死锁简介：
 当一个线程占用着锁的资源，结果线程因为其他原因造成阻塞，使得这个线程对之前的锁的资源一直占用着，当其他线程来申请获取那个锁的资源的时候，会因为得不到锁而一直长时间的等待下去。
 
-#### 死锁的常见原因：
+##### 13.1.2 死锁的常见原因：
 - 一个线程两次申请锁
 - 两个线程互相申请对方的锁，但是对方都不释放锁
 - 系统资源不足
 - 进程运行推进的顺序不合适
 - 资源分配不当
 
-#### 死锁产生的必要条件：
-（1）互斥：一次只有一个进程可以使用一个资源，其他进程不能够访问已经分配给其他进程的资源。  
-（2）占有且等待：当一个进程在等待分配得到其他资源的时候，对已经占有的资源部释放。  
-（3）非抢占：不能够强行抢占进程中已经被占有的资源。  
-（4）循环等待：存在一个粉笔的进程链，使得每个资源至少占有此链中下一个进程所需要的一个资源。  
+##### 13.1.3 死锁产生的必要条件：
+> （1）互斥：一次只有一个进程可以使用一个资源，其他进程不能够访问已经分配给其他进程的资源。  
+> （2）占有且等待：当一个进程在等待分配得到其他资源的时候，对已经占有的资源部释放。 
+> （3）非抢占：不能够强行抢占进程中已经被占有的资源。  
+> （4）循环等待：存在一个进程链，使得每个资源至少占有此链中下一个进程所需要的一个资源。 
 
-#### 两种死锁避免算法：
-##### 1）进程启动拒绝：
-如果一个进程的请求会导致死锁，则不启动该进程。
+##### 13.1.4 两种死锁避免算法：
+> **1）进程启动拒绝：**
+>
+> 如果一个进程的请求会导致死锁，则不启动该进程。
+>
+> **2）资源分配拒绝：**
+>
+> 如果一个进程增加的资源请求会导致死锁，则不允许此分配(银行家算法)。 
 
-##### 2）资源分配拒绝：
-如果一个进程增加的资源请求会导致死锁，则不允许此分配(银行家算法)。 
+##### 13.1.5 死锁解除方法：
+> **1) 资源剥夺法：**
+>
+> 挂起某些死锁进程，并抢占它的资源，将这些资源分配给其他的死锁进程。但应防止被挂起的进程长时间得不到资源，而处于资源匮乏的状态。
+>
+> **2) 撤销进程法：**
+>
+> 强制撤销部分、甚至全部死锁进程并剥夺这些进程的资源。撤销的原则可以按进程优先级和撤销进程代价的高低进行。
 
-#### 两种常用的死锁解除方法：
-##### 1) 资源剥夺法：
-挂起某些死锁进程，并抢占它的资源，将这些资源分配给其他的死锁进程。但应防止被挂起的进程长时间得不到资源，而处于资源匮乏的状态。
+##### 13.1.6 死锁demo
 
-##### 2) 撤销进程法：
-强制撤销部分、甚至全部死锁进程并剥夺这些进程的资源。撤销的原则可以按进程优先级和撤销进程代价的高低进行。
+```java
+	public static void main(String[] args) {
+		List<Integer> listle = new ArrayList<Integer>();
+		List<Integer> listri = new ArrayList<Integer>();
+		for (int i = 0; i < 10; i++) {
+			listle.add(i+10);
+			listri.add(i+20);
+		}
 
-### 14、ThreadLoacl简介
+		new Thread(() -> {
+			synchronized (listle) {
+				for (Integer integer : listle) {
+					System.out.println("listle的遍历操作："+integer);
+				}
+				try {
+					TimeUnit.SECONDS.sleep(1);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				synchronized (listri) {
+					System.out.println("在listle中给listri上锁");
+				}
+			}
+		}).start();
+
+		new Thread(() -> {
+			synchronized (listri) {
+				for (Integer integer : listri) {
+					System.out.println("listri的遍历操作："+integer);
+				}
+				try {
+					TimeUnit.SECONDS.sleep(1);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				synchronized (listle) {
+					System.out.println("在listri中给listle上锁");
+				}
+			}
+		}).start();
+	}
+```
+
+#### 13.2 活锁
+
+##### 13.2.1 活锁简介
+
+> 任务或者执行者没有被阻塞，由于某一些条件没有满足，导致一直重复进行尝试，失败，尝试，失败的过程。直到获得对应的锁。
+
+##### 13.2.2 与死锁的差异
+
+> ​	活锁与死锁的差别就在于：处于活锁的实体是在不断的改变状态的，所谓的“活”，而处于死锁状态的实体表现为等待；
+>
+> ​	死锁在于两个进程之间都不释放锁的资源，导致了彼此之间一直都处于等待状态。
+>
+> ​	活锁在于进程会不断的进行尝试获取锁的操作，一直改变进程的状态，保证进程的不进入死锁。
+
+#### 13.3 饥饿
+
+##### 13.3.1 饥饿简介
+
+> 一个或者多个线程因为种种原因无法获得所需要的资源，导致一直无法执行的状态。
+
+##### 13.3.2 饥饿原因
+
+> - 高优先级线程吞噬了所有的低优先级的CPU时间。
+> - 线程被永久堵塞在一个等待进入的同步块的状态，因为其他线程纵是能够给在它之前持续的对该同步块进行访问。
+> - 线程在等待一个本身也处于永久等待完成的对象，其他线程总是被持续的唤醒。
+
+### 14、ThreadLocal简介
 **1）作用：**  
-> ThreadLocal用于维护变量的时候，为每个使用该变量的线程提供独立的变量副本，让每隔线程能够独立的改变自己的副本，而不影响其他线程的操作，也就是说线程之间是隔离的。
+> ​	ThreadLocal用于维护变量的时候，为每个使用该变量的线程提供独立的变量副本，让每隔线程能够独立的改变自己的副本，而不影响其他线程的操作，也就是说线程之间是隔离的。
 
 **2）默认提供的及几个方法：**    
 - ThreadLocal.get(): 获取ThreadLocal中当前线程共享变量的值。
@@ -921,7 +1001,7 @@ semaphore.release();
 方式一：创建一个默认值为 null 的ThreadLocal对象。  
 
 注意：这种方式如果不先赋值就调用get()方法的话，容易造成空指针异常。
-```
+```java
 //创建一个Long类型与一个String类型的 ThreadLocal对象。
 ThreadLocal<Long> longLocal = new ThreadLocal<Long>();
 ThreadLocal<String> stringLocal = new ThreadLocal<String>();
@@ -954,9 +1034,72 @@ ThreadLocal<String> stringLocal = new ThreadLocal<String>(){;
 **4）ThreadLocal与synchronized关键字的区别：**  
 首先,它们都是为了解决多线程中相同变量访问冲突问题。不过,在同步机制中,要通过对象的锁机制保证同一时间只有一个线程访问该变量。该变量是线程共享的, 使用同步机制要求程序缜密地分析什么时候对该变量读写, 什么时候需要锁定某个对象, 什么时候释放对象锁等复杂的问题,程序设计编写难度较大, 是一种“以时间换空间”的方式。 而ThreadLocal采用了以“以空间换时间”的方式。
 
+### 15 用户线程、守护线程
+
+#### 15.1 线程分类
+
+- User Thread（用户线程、非守护线程）
+- Daemon Thread（守护线程）
+
+#### 15.2 守护线程Daemon
+
+##### 15.2.1 基本介绍
+
+> 守护线程在JVM的运行过程中就是非守护线程的保姆。
+>
+> **当JVM中的实例尚存着任何一个费守护线程没有结束，守护线程就全部继续工作。当只有最后一个非守护线程结束以后，守护线程随着JVM一同结束工作。**
+>
+> 守护线程通常情况下，是用作为其他线程的运行提供便利的操作。守护线程最定性的应用就是GC操作。
+
+##### 15.2.2 注意事项
+
+> - **thread.setDaemom(true)** 需要在 thread.start() 之前执行，否则会抛出IllegalThreadStateException异常。
+> - Daemon线程中创建的也是Daemon线程。
+> - Daemon守护线程通常情况下，不要进行读、写、计算等操作，可用于做 Hearth Check。
+
+##### 15.2.3 代码示例
+
+```java
+public static void main(String[] args) {
+		//创建一个非守护线程
+		new Thread(() -> {
+
+			//创建一个守护线程，用于进行Hearth check的操作
+			Thread thread = new Thread(() -> {
+				while (true) {
+					System.out.println("hearth check操作");
+					try {
+						TimeUnit.SECONDS.sleep(1);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			});
+			thread.setDaemon(true);
+			thread.start();
+            //验证是否是守护线程
+            boolean daemon = thread.isDaemon();
+
+			//user Thread的其他操作
+			try {
+				TimeUnit.MINUTES.sleep(2);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		}).start();
+	}
+```
+
+### 16 阻塞队列
 
 
-### 15、线程面试题
+
+
+
+
+
+### 线程面试题
 
 #### 1）乐观锁与悲观锁？   
 
@@ -1026,9 +1169,16 @@ a先行于b，b先行于c，传递性
 
 #### 9）怎么检测一个线程是否拥有锁
 
-在 java.lang.Thread 中有一个方法叫 holdsLock，当且仅当当前线程拥有某个具体对象的锁时它返回true。
+> ​	在 java.lang.Thread 中有一个方法叫 holdsLock，当且仅当当前线程拥有某个具体对象的锁时它返回true。
 
 
+
+#### 10）线程优化策略
+
+- 使用线程池管理对应的线程，避免出现野线程问题。
+- 避免使用线程组来对线程进行分组，无实际意义。
+
+#### 11）线程调度算法
 
 
 
@@ -1572,7 +1722,6 @@ String thread1 = Thread.currentThread().getName();
   
       thread.start();
       thread.interrupt();
-  
   }
   ```
 
