@@ -1091,9 +1091,295 @@ public static void main(String[] args) {
 	}
 ```
 
-### 16 阻塞队列
+### 16 线程join
 
+#### 16.1 基本介绍
 
+​	Thread类中的join() 方法主要的作用就是同步，它可以使得线程之间的并行执行变成串行执行。
+
+​	join方法的功能在于：在某一个线程中调用其他线程的join()方法，就能够实现这个线程在join()线程执行才进行执行，将两个并行的线程变成串行操作。
+
+#### 16.2 详情介绍
+
+​	线程 join() 方法的调用是在线程 start() 之后进行操作。
+
+​	线程的 join() 方法是一个非常重要的方法，使用它的特性可以实现很多比较强大的功能，与sleep() 方法一样，是一个可中断的方法。
+
+​	线程join()主要是用来进行阻塞当前线程，直到调用该方法的其他线程执行完毕以后，再进行当前线程后面的执行。
+
+##### 16.2.1 join()源码
+
+​	Thread的join()方法底层采用的是wait()方法进行等待的操作。
+
+```java
+    /**
+     * Waits at most {@code millis} milliseconds for this thread to
+     * die. A timeout of {@code 0} means to wait forever.
+     *
+     * <p> This implementation uses a loop of {@code this.wait} calls
+     * conditioned on {@code this.isAlive}. As a thread terminates the
+     * {@code this.notifyAll} method is invoked. It is recommended that
+     * applications not use {@code wait}, {@code notify}, or
+     * {@code notifyAll} on {@code Thread} instances.
+     *
+     * @param  millis
+     *         the time to wait in milliseconds
+     *
+     * @throws  IllegalArgumentException
+     *          if the value of {@code millis} is negative
+     *
+     * @throws  InterruptedException
+     *          if any thread has interrupted the current thread. The
+     *          <i>interrupted status</i> of the current thread is
+     *          cleared when this exception is thrown.
+     */
+    public final synchronized void join(long millis)
+    throws InterruptedException {
+        long base = System.currentTimeMillis();
+        long now = 0;
+
+        if (millis < 0) {
+            throw new IllegalArgumentException("timeout value is negative");
+        }
+
+        if (millis == 0) {
+            while (isAlive()) {
+                wait(0);
+            }
+        } else {
+            while (isAlive()) {
+                long delay = millis - now;
+                if (delay <= 0) {
+                    break;
+                }
+                wait(delay);
+                now = System.currentTimeMillis() - base;
+            }
+        }
+    }
+```
+
+#### 16.3 代码示例
+
+**案例一：** Thread1与Thread2线程并行执行，而main线程则延迟执行。
+
+```java
+/**
+ * join() 方法：针对的线程一直执行完毕以后，才会去执行其他的线程
+ *      join()方法只是限制启动这个线程的线程延迟执行。
+ *      也就是说：针对下面的方法 Thread1与Thread2交互执行完以后，才会继续执行main线程
+ */
+public class ThreadJoin {
+
+    public static void main(String[] args) {
+        Thread thread1 = new Thread(() -> {
+            IntStream.range(1,1000).forEach(i -> System.out.println(Thread.currentThread().getName() + i));
+        },"thread1");
+        thread1.start();
+        Thread thread2 = new Thread(() -> {
+            IntStream.range(1,1000).forEach(i -> System.out.println(Thread.currentThread().getName() + i));
+        },"thread2");
+        thread2.start();
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        IntStream.range(1,1000).forEach(i -> System.out.println(Thread.currentThread().getName() + i));
+
+    }
+}
+```
+
+**案例二：** Thread2线程中调用Thread1线程的join()方法，main线程中调用Thread2线程的join()方法，则串行顺序为：先执行Thread1，再执行Thread2，最后执行thread的3.
+
+```java
+    public static void main(String[] args) {
+        Thread thread1 = new Thread(() -> {
+            IntStream.range(1,1000).forEach(i -> System.out.println(Thread.currentThread().getName() + i));
+        },"thread1");
+        thread1.start();
+        Thread thread2 = new Thread(() -> {
+            try {
+                thread1.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            IntStream.range(1,1000).forEach(i -> System.out.println(Thread.currentThread().getName() + i));
+        },"thread2");
+        thread2.start();
+        try {
+            thread2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        IntStream.range(1,1000).forEach(i -> System.out.println(Thread.currentThread().getName() + i));
+    }
+```
+
+### 17 线程 interrupt
+
+​	线程 interrupt ，主要是有与线程中断相关的API。
+
+- public  void  interrupt()
+- public  static  boolean  interupted()
+- public  boolean  isInterrupted()
+
+#### 1）interrupt
+
+​	当很多方法调用以后，线程能够进入到阻塞状态；而调用当前线程的 interrupt 方法，就可以打断当前线程的阻塞状态。
+
+##### 让线程进入阻塞状态的方法：
+
+- Object 的 wait()  方法。
+
+- Object 的 wait( long ) 方法。
+
+- Object 的 wait( long,int ) 方法。
+
+- Thread 的 sleep( long ) 方法。
+
+- Thread 的 sleep( long,int ) 方法。
+
+- Thread 的 join() 方法。
+
+- Thread 的 join( long ) 方法。
+
+- Thread 的 join( long,int ) 方法。
+
+- TnterruptibleChannel 的 IO 操作。
+
+- Selector 的 wakeup() 方法。
+
+- .......
+
+  ​	当使用以上方法进入了阻塞状态以后，在其他线程中为这个阻塞的线程调用 interrupt() 方法的时候，就能够打断这个阻塞的状态。打断阻塞状态不是意味着线程生命周期结束，仅仅是打断当前阻塞的这个状态而已。
+
+  ​	**一旦线程在阻塞情况下被打断，都会抛出一个 InterruptedExectpion 异常。**
+
+  ​	代码实现：
+
+  ```java
+  /**
+  * 创建一个新的线程，启动该线程，让其阻塞一分钟；再在主线程中调用 interrupt() 方法，让其从阻塞状* 态结束，抛出异常：java.lang.InterruptedException: sleep interrupted
+  */
+  public static void main(String[] args) {
+      Thread thread = new Thread(() -> {
+          try {
+              //让当前线程阻塞以秒
+              TimeUnit.MINUTES.sleep(1);
+          } catch (InterruptedException e) {
+              e.printStackTrace();
+          }
+      });
+  
+      thread.start();
+      thread.interrupt();
+  }
+  ```
+
+#### 2）isInterrupted
+
+​	isInterrupted是Thread一个成员方法，主要适用于判断当前线程是都被中断，该方法仅仅是对interrupt() 标识的一个判断，并不会影响标识。
+
+#### 3）interrupted
+
+​	interrupted() 方法是一个静态方法，也是用来判断当前线程是否被打断。但是它的实现过程是：调用该方法，会直接搽除掉线程的 interrupt标识，第一次返回结果为true，第二次以及以后返回的结果都是false。
+
+### 18 关闭线程
+
+#### 18.1 开关关闭线程
+
+​	使用开关来进行线程的关闭，能够保证线程的在执行此次以后就停止执行了。
+
+```java
+public class CloseThread {
+
+    public static void main(String[] args) {
+        MyThread runnable = new MyThread();
+        Thread thread = new Thread(runnable);
+        thread.start();
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        runnable.shutDown();
+    }
+
+}
+
+class MyThread implements Runnable {
+
+    /**
+     * 线程启动的开关
+     */
+    private volatile boolean start = true;
+
+    @Override
+    public void run() {
+        while (start) {
+            Optional.of("线程再执行").ifPresent(System.out::println);
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 关闭线程的开关
+     * @return
+     */
+    public boolean shutDown() {
+        start = false;
+        System.out.println("线程已经关闭");
+        return start;
+    }
+}
+```
+
+#### 18.2 interrupt打断
+
+​	调用线程的 interrupt() 方法将线程进行打断操作。
+
+```java
+public class CloseThread1 {
+
+    public static void main(String[] args) {
+        MyThread1 thread1 = new MyThread1();
+        Thread thread = new Thread(thread1);
+        thread.start();
+
+        try {
+            TimeUnit.SECONDS.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        thread.interrupt();
+    }
+
+}
+
+class MyThread1 implements Runnable {
+
+    @Override
+    public void run() {
+        while (true) {
+            if (Thread.interrupted()) {
+                System.out.println("线程已经停止");
+                break;
+            }
+            Optional.of("线程正在执行").ifPresent(System.out::println);
+        }
+    }
+}
+```
 
 
 
@@ -1662,84 +1948,6 @@ String thread1 = Thread.currentThread().getName();
   });
   System.out.println("当前线程的类加载器："+Thread.currentThread().getContextClassLoader());
   ```
-
-
-### 16、线程 interrupt
-
-​	线程 interrupt ，主要是有与线程终端相关的API。
-
-- public  void  interrupt()
-- public  static  boolean  interupted()
-- public  boolean  isInterrupted()
-
-#### 1）interrupt
-
-​	当很多方法调用以后，线程能够进入到阻塞状态；而调用当前线程的 interrupt 方法，就可以打断当前线程的阻塞状态。
-
-##### 让线程进入阻塞状态的方法：
-
-- Object 的 wait()  方法。
-
-- Object 的 wait( long ) 方法。
-
-- Object 的 wait( long,int ) 方法。
-
-- Thread 的 sleep( long ) 方法。
-
-- Thread 的 sleep( long,int ) 方法。
-
-- Thread 的 join() 方法。
-
-- Thread 的 join( long ) 方法。
-
-- Thread 的 join( long,int ) 方法。
-
-- TnterruptibleChannel 的 IO 操作。
-
-- Selector 的 wakeup() 方法。
-
-- .......
-
-  ​	当使用以上方法进入了阻塞状态以后，在其他线程中为这个阻塞的线程调用 interrupt() 方法的时候，就能够打断这个阻塞的状态。打断阻塞状态不是意味着线程生命周期结束，仅仅是打断当前阻塞的这个状态而已。
-
-  ​	**一旦线程在阻塞情况下被打断，都会抛出一个 InterruptedExectpion 异常。**
-
-  ​	代码实现：
-
-  ```java
-  /**
-  * 创建一个新的线程，启动该线程，让其阻塞一分钟；再在主线程中调用 interrupt() 方法，让其从阻塞状* 态结束，抛出异常：java.lang.InterruptedException: sleep interrupted
-  */
-  public static void main(String[] args) {
-      Thread thread = new Thread(() -> {
-          try {
-              //让当前线程阻塞以秒
-              TimeUnit.MINUTES.sleep(1);
-          } catch (InterruptedException e) {
-              e.printStackTrace();
-          }
-      });
-  
-      thread.start();
-      thread.interrupt();
-  }
-  ```
-
-#### 2）isInterrupted
-
-​	isInterrupted是Thread一个成员方法，主要适用于判断当前线程是都被中断，该方法仅仅是对interrupt() 标识的一个判断，并不会影响标识。
-
-#### 3）interrupted
-
-​	interrupted() 方法是一个静态方法，也是用来判断当前线程是否被打断。但是它的实现过程是：调用该方法，会直接搽除掉线程的 interrupt标识，第一次返回结果为true，第二次以及以后返回的结果都是false。
-
-
-
-### 17、线程join
-
-​	线程的 join() 方法是一个非常重要的方法，使用它的特性可以实现很多比较强大的功能，与sleep() 方法一样，是一个可中断的方法。
-
-​	线程join()主要是用来进行阻塞当前线程，直到调用该方法的其他线程执行完毕以后，再进行当前线程后面的执行。
 
 
 
