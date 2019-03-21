@@ -1891,7 +1891,7 @@ Lambda表达式在java语言中引用了一个新的语法元素与操作符。�
 ##### 语法格式一：无参，无返回值，Lambda体只需一条语句。
 代码为：
 
-```
+```java
 Runnable r1 = () -> System.out.println("张世林使用Lambda表达式");
 r1.run();
 ```
@@ -1899,7 +1899,7 @@ r1.run();
 ##### 语法格式二：Lambda需要一个参数，且无返回值。
 代码为：
 
-```
+```java
 //调用java自带的Consumer类中的 accept()方法
 StringBuffer name = new StringBuffer();
 name.append("张世林");
@@ -1914,7 +1914,7 @@ face.interface2(name);
 ##### 语法格式三：Lambda需要两个以上的参数，并且Lambda体中有多条语句，有返回值。
 代码为：
 
-```
+```java
 @Test
 public void test4()
 {
@@ -1924,7 +1924,7 @@ public void test4()
 		y = y + 1 ;
 		return Integer.compare(x, y);
 	};
-System.out.println(com.compare(1, 22));
+	System.out.println(com.compare(1, 22));
 		
 	//使用自及创建的那个函数式接口
 	TestInterface test = (p,q) -> {
@@ -1940,11 +1940,11 @@ System.out.println(com.compare(1, 22));
 ##### 语法格式四：Lambda体中如果只有一条语句，则可以不写 大括号 与return；
 代码为：
 
-```
+```java
 //使用自及创建的那个函数式接口
-	TestInterface test = (p) -> p = p+1 ;
-	int k = test.interface5(3);
-	System.out.println(k);
+TestInterface test = (p) -> p = p+1 ;
+int k = test.interface5(3);
+System.out.println(k);
 ```
 
 ##### 语法格式五：Lambda表达式的参数具有参数类型推断的功能，不需要输入参数数据类型。
@@ -1960,84 +1960,95 @@ System.out.println(com.compare(1, 22));
 
 ##### 使用案例：
 
-```
+```java
 //Predicate<T> 断言型接口：
-	@Test
-	public void test4(){
-		List<String> list = Arrays.asList("Hello", "atguigu", "Lambda", "www", "ok");
-		List<String> strList = filterStr(list, (s) -> s.length() > 3);
-		
-		for (String str : strList) {
-			System.out.println(str);
-		}
-	}
-	//需求：将满足条件的字符串，放入集合中
-	public List<String> filterStr(List<String> list, Predicate<String> pre){
-		List<String> strList = new ArrayList<>();
-		
-		for (String str : list) {
-			if(pre.test(str)){
-				strList.add(str);
-			}
-		}
-		
-		return strList;
-	}
+@Test
+public void test4(){
+    List<String> list = Arrays.asList("Hello", "atguigu", "Lambda", "www", "ok");
+    List<String> strList = filterStr(list, (s) -> s.length() > 3);
+
+    for (String str : strList) {
+        System.out.println(str);
+    }
+}
+//需求：将满足条件的字符串，放入集合中
+public List<String> filterStr(List<String> list, Predicate<String> pre){
+    List<String> strList = new ArrayList<>();
+
+    for (String str : list) {
+        if(pre.test(str)){
+            strList.add(str);
+        }
+    }
+    return strList;
+}
 ```
 
 
-```
+```java
 //Function<T, R> 函数型接口：
-	@Test
-	public void test3(){
-		String newStr = strHandler("\t\t\t 我大尚硅谷威武   ", (str) -> str.trim());
-		System.out.println(newStr);
-		
-		String subStr = strHandler("我大尚硅谷威武", (str) -> str.substring(2, 5));
-		System.out.println(subStr);
-	}
-	//需求：用于处理字符串，如何处理留给调用的时候来使用
-	public String strHandler(String str, Function<String, String> fun){
-		return fun.apply(str);
-	}
+@Test
+public void test3(){
+    String newStr = strHandler("\t\t\t 我大尚硅谷威武   ", (str) -> str.trim());
+    System.out.println(newStr);
+
+    String subStr = strHandler("我大尚硅谷威武", (str) -> str.substring(2, 5));
+    System.out.println(subStr);
+}
+//需求：用于处理字符串，如何处理留给调用的时候来使用
+public String strHandler(String str, Function<String, String> fun){
+    return fun.apply(str);
+}
 ```
 
 
-```
+```java
 //Supplier<T> 供给型接口 :
-	@Test
-	public void test2(){
-		List<Integer> numList = getNumList(10, () -> (int)(Math.random() * 100));
-		
-		for (Integer num : numList) {
-			System.out.println(num);
-		}
-	}
-	//需求：产生指定个数的整数，并放入集合中
-	public List<Integer> getNumList(int num, Supplier<Integer> sup){
-		List<Integer> list = new ArrayList<>();
-		
-		for (int i = 0; i < num; i++) {
-			Integer n = sup.get();
-			list.add(n);
-		}
-		
-		return list;
-	}
+@Test
+public void test2(){
+    List<Integer> numList = getNumList(10, () -> (int)(Math.random() * 100));
+
+    for (Integer num : numList) {
+        System.out.println(num);
+    }
+}
+//需求：产生指定个数的整数，并放入集合中
+public List<Integer> getNumList(int num, Supplier<Integer> sup){
+    List<Integer> list = new ArrayList<>();
+
+    for (int i = 0; i < num; i++) {
+        Integer n = sup.get();
+        list.add(n);
+    }
+
+    return list;
+}
 ```
 
 
-```
+```java
 //Consumer<T> 消费型接口 :将参数传递进去，不进行值的返回
-	@Test
-	public void test1(){
-		happy(10000, (m) -> System.out.println("你们刚哥喜欢大宝剑，每次消费：" + (m+10) + "元"));
-	} 
-	
-	public void happy(double money, Consumer<Double> con){
-		con.accept(money);
-	}
+@Test
+public void test1(){
+    happy(10000, (m) -> System.out.println("你们刚哥喜欢大宝剑，每次消费：" + (m+10) + "元"));
+} 
+
+public void happy(double money, Consumer<Double> con){
+    con.accept(money);
+}
 ```
+
+### 类型推断
+
+```
+
+```
+
+
+
+
+
+
 
 ### 二、方法引用与构造器引用
 
@@ -2055,89 +2066,89 @@ System.out.println(com.compare(1, 22));
 ##### 代码如下：
 
 
-```
+```java
 @Test
-	public void test5(){
-		BiPredicate<String, String> bp = (x, y) -> x.equals(y);
-		System.out.println(bp.test("abcde", "abcde"));
-		
-		System.out.println("-----------------------------------------");
-		
-		BiPredicate<String, String> bp2 = String::equals;
-		System.out.println(bp2.test("abc", "abc"));
-		
-		System.out.println("-----------------------------------------");
-		
-		
-		Function<Employee, String> fun = (e) -> e.show();
-		System.out.println(fun.apply(new Employee()));
-		
-		System.out.println("-----------------------------------------");
-		
-		Function<Employee, String> fun2 = Employee::show;
-		System.out.println(fun2.apply(new Employee()));
-		
-	}
+public void test5(){
+    BiPredicate<String, String> bp = (x, y) -> x.equals(y);
+    System.out.println(bp.test("abcde", "abcde"));
+
+    System.out.println("-----------------------------------------");
+
+    BiPredicate<String, String> bp2 = String::equals;
+    System.out.println(bp2.test("abc", "abc"));
+
+    System.out.println("-----------------------------------------");
+
+
+    Function<Employee, String> fun = (e) -> e.show();
+    System.out.println(fun.apply(new Employee()));
+
+    System.out.println("-----------------------------------------");
+
+    Function<Employee, String> fun2 = Employee::show;
+    System.out.println(fun2.apply(new Employee()));
+
+}
 ```
 
 ​	
 
-```
+```java
 //类名 :: 静态方法名
-	@Test
-	public void test4(){
-		Comparator<Integer> com = (x, y) -> Integer.compare(x, y);
-		
-		System.out.println("-------------------------------------");
-		
-		Comparator<Integer> com2 = Integer::compare;
-	}
-	
-	@Test
-	public void test3(){
-		BiFunction<Double, Double, Double> fun = (x, y) -> Math.max(x, y);
-		System.out.println(fun.apply(1.5, 22.2));
-		
-		System.out.println("--------------------------------------------------");
-		
-		BiFunction<Double, Double, Double> fun2 = Math::max;
-		System.out.println(fun2.apply(1.2, 1.5));
-	}
-```
-
-
-
-```
-//对象的引用 :: 实例方法名
-	@Test
-	public void test2(){
-		Employee emp = new Employee(101, "张三", 18, 9999.99);
-		
-		Supplier<String> sup = () -> emp.getName();
-		System.out.println(sup.get());
-		
-		System.out.println("----------------------------------");
-		
-		Supplier<String> sup2 = emp::getName;
-		System.out.println(sup2.get());
-	}
-```
-
-
-```
 @Test
-	public void test1(){
-		PrintStream ps = System.out;
-		Consumer<String> con = (str) -> ps.println(str);
-		con.accept("Hello World！");
-		
-		System.out.println("--------------------------------");
-		
-		Consumer<String> con2 = ps::println;
-		con2.accept("Hello Java8！");
-		
-		Consumer<String> con3 = System.out::println;
-	}
+public void test4(){
+    Comparator<Integer> com = (x, y) -> Integer.compare(x, y);
+
+    System.out.println("-------------------------------------");
+
+    Comparator<Integer> com2 = Integer::compare;
+}
+
+@Test
+public void test3(){
+    BiFunction<Double, Double, Double> fun = (x, y) -> Math.max(x, y);
+    System.out.println(fun.apply(1.5, 22.2));
+
+    System.out.println("--------------------------------------------------");
+
+    BiFunction<Double, Double, Double> fun2 = Math::max;
+    System.out.println(fun2.apply(1.2, 1.5));
+}
+```
+
+
+
+```java
+//对象的引用 :: 实例方法名
+@Test
+public void test2(){
+    Employee emp = new Employee(101, "张三", 18, 9999.99);
+
+    Supplier<String> sup = () -> emp.getName();
+    System.out.println(sup.get());
+
+    System.out.println("----------------------------------");
+
+    Supplier<String> sup2 = emp::getName;
+    System.out.println(sup2.get());
+}
+```
+
+
+```java
+@Test
+public void test1(){
+    PrintStream ps = System.out;
+    Consumer<String> con = (str) -> ps.println(str);
+    con.accept("Hello World！");
+
+    System.out.println("--------------------------------");
+
+    Consumer<String> con2 = ps::println;
+    con2.accept("Hello Java8！");
+
+    Consumer<String> con3 = System.out::println;
+}
 ```
 
 #### 2、构造器引用：
@@ -2199,65 +2210,57 @@ list.forEach(System.out::println);
 
 ### 三、Optional 容器类--避免空指针异常
 #### 1、简介：
-Optional<T>是在java.util.Optional中的一个容器类，用于封装 T 类型的数据来尽量的避免空指针异常。
-#### 2、方法：
-- Optional.of(T t) : 创建一个T类型的 Optional 实例。  
+> Optional<T>是在java.util.Optional中的一个容器类，用于封装 T 类型的数据来尽量的避免空指针异常。
+>
+> Optional 类是一个可以为null的容器对象。如果值存在则isPresent()方法会返回true，调用get()方法会返回该对象。
+>
+> Optional 是个容器：它可以保存类型T的值，或者仅仅保存null。Optional提供很多有用的方法，这样我们就不用显式进行空值检测。
+>
+> Optional 类的引入很好的解决空指针异常。
 
-- Optional.empty() : 创建一个空的 Optional 实例。
-- Optional.ofNullable(T t):若 t 不为 null,创建 Optional 实例,否则创建空实例。
-- isPresent() : 判断对象是否包含值。
-- orElse(T t) :  如果调用对象包含值，返回该值，否则返回T类型的默认值。
-- orElseGet(Supplier s) :如果调用对象包含值，返回该值，否则返回 s 获取的值。
-- map(Function f): 如果有值对其处理，并返回处理后的Optional，否则返回 Optional.empty()
-- flatMap(Function mapper):与 map 类似，要求返回值必须是Optional
+#### 2、方法：
+> - Optional.of(T t) : 创建一个T类型的 Optional 实例。  
+> - Optional.empty() : 创建一个空的 Optional 实例。
+> - Optional.ofNullable(T t):若 t 不为 null,创建 Optional 实例,否则创建空实例。
+> - isPresent() : 判断对象是否包含值。
+> - orElse(T t) :  如果调用对象包含值，返回该值，否则返回T类型的默认值。
+> - orElseGet(Supplier s) :如果调用对象包含值，返回该值，否则返回 s 获取的值。
+> - map(Function f): 如果有值对其处理，并返回处理后的Optional，否则返回 Optional.empty()
+> - flatMap(Function mapper):与 map 类似，要求返回值必须是Optional
 
 #### 3、使用方式：
 
-```
+```java
 @Test
-	public void test1()
-	{
-		//创建一个实例
-		Optional<List<Person>> op1 = Optional.of(list);
-		System.out.println(op1.get());
-		
-		//创建一个空的实例
-		Optional<Person> op2 = Optional.empty();
-		
-		//创建一个实例，若形参为null，则创建空实例，否则创建Optional实例
-		Optional<List<Person>> op3 = Optional.ofNullable(list);
-		System.out.println(op3);
-		
-		//判断对象中是否有内容
-		boolean present = op3.isPresent();
-		System.out.println(present);
-		
-		//如果对象Optional对象是空的话，返回自己构建的那个值
-		Person orElseGet = op2.orElseGet(() -> new Person(3,"3","3",3,true));
-		System.out.println(orElseGet);
-		
-		//
-		Optional<Person> person1 = Optional.ofNullable(new Person(3,"3","3",3,true));
-		Optional<Integer> map = person1.map( (p) -> p.getAge());
-		System.out.println(map);
-	}
-```
+public void test1()
+{
+    //创建一个实例
+    Optional<List<Person>> op1 = Optional.of(list);
+    System.out.println(op1.get());
 
+    //创建一个空的实例
+    Optional<Person> op2 = Optional.empty();
 
-### 四、java8接口中可以编写方法以及方法的实现。
-#### 简介：
-java8中允许接口中包含具体实现的方法，该方法称为 “默认方法”，默认方法必须使用 default 来修饰。
-#### 具体实现：
+    //创建一个实例，若形参为null，则创建空实例，否则创建Optional实例
+    Optional<List<Person>> op3 = Optional.ofNullable(list);
+    System.out.println(op3);
 
-```
-public interface MyFun {
-	void test1();
-	default void test()
-	{
-		System.out.println();
-	}
+    //判断对象中是否有内容
+    boolean present = op3.isPresent();
+    System.out.println(present);
+
+    //如果对象Optional对象是空的话，返回自己构建的那个值
+    Person orElseGet = op2.orElseGet(() -> new Person(3,"3","3",3,true));
+    System.out.println(orElseGet);
+
+    //
+    Optional<Person> person1 = Optional.ofNullable(new Person(3,"3","3",3,true));
+    Optional<Integer> map = person1.map( (p) -> p.getAge());
+    System.out.println(map);
 }
 ```
+
+
 
 
 ### 五、java8新时间日期API
@@ -2271,23 +2274,23 @@ public interface MyFun {
 
 ```java
 LocalDateTime ldt = LocalDateTime.now();
-		System.out.println(ldt);
-		
-		LocalDateTime ld2 = LocalDateTime.of(2016, 11, 21, 10, 10, 10);
-		System.out.println(ld2);
-		
-		LocalDateTime ldt3 = ld2.plusYears(20);
-		System.out.println(ldt3);
-		
-		LocalDateTime ldt4 = ld2.minusMonths(2);
-		System.out.println(ldt4);
-		
-		System.out.println(ldt.getYear());
-		System.out.println(ldt.getMonthValue());
-		System.out.println(ldt.getDayOfMonth());
-		System.out.println(ldt.getHour());
-		System.out.println(ldt.getMinute());
-		System.out.println(ldt.getSecond());
+System.out.println(ldt);
+
+LocalDateTime ld2 = LocalDateTime.of(2016, 11, 21, 10, 10, 10);
+System.out.println(ld2);
+
+LocalDateTime ldt3 = ld2.plusYears(20);
+System.out.println(ldt3);
+
+LocalDateTime ldt4 = ld2.minusMonths(2);
+System.out.println(ldt4);
+
+System.out.println(ldt.getYear());
+System.out.println(ldt.getMonthValue());
+System.out.println(ldt.getDayOfMonth());
+System.out.println(ldt.getHour());
+System.out.println(ldt.getMinute());
+System.out.println(ldt.getSecond());
 ```
 
 
@@ -2332,16 +2335,17 @@ System.out.println(zdt);
 ### 八、java8 -Stream API
 
 #### 1、简单理解：
-将原有的数据源(比如 数组、集合、对象等) 转换成流，然后根据 Stream API 来进行一系列的中间操作，执行完以后，会产生一个新的流来存储新的结果，而原有的数据不会改变。
+>  	将原有的数据源(比如 数组、集合、对象等) 转换成流，然后根据 Stream API 来进行一系列的中间操作，执行完以后，会产生一个新的流来存储新的结果，而原有的数据不会改变。
 
 #### 2、什么是流(Stream)？
-“流” 就是数据渠道，用于操作数据源(集合、数组等)所生成的元素序列。  
-“集合讲的是数据，流讲的是计算”。  
+> “流” 就是数据渠道，用于操作数据源(集合、数组等)所生成的元素序列。  
+> “集合讲的是数据，流讲的是计算”。  
 
 **”流“的特点：**  
-Stream 自己不会存储对象。  
-Stream 不会改变原来的对象，而是返回一个持有结果的 新的Stream。  
-Stream 操作是延迟执行的，这意味着他们会等到需要的结果的时候才执行。  
+
+> Stream 自己不会存储对象。  
+> Stream 不会改变原来的对象，而是返回一个持有结果的 新的Stream。  
+> Stream 操作是延迟执行的，这意味着他们会等到需要的结果的时候才执行。  
 
 #### 3、Stream的三个操作步骤：
 创建 Stream ： 一个数据源(如：集合、数组等)，获取一个流。  
@@ -2350,10 +2354,17 @@ Stream 操作是延迟执行的，这意味着他们会等到需要的结果的�
 
 ![image](https://note.youdao.com/yws/api/personal/file/CCBB0847D07F41E9831DB0D2C247612C?method=download&shareKey=b8dd944c3143a5a1961be6b07ba0e9f7)
 
+#### 4 流对象
 
-#### 4、对Stream流的代码操作：
+- **`IntStream`**：支持串行、并行操作的序列，元素只有int类型的流。
+- **`DoubleStream`**：支持串行、并行操作的序列，元素只有
+
+
+
+#### 5、对Stream流的代码操作：
+
 ##### 1）创建Stream流：
-- 方法一：创建数据源,然后将数据源转换为 Stream 流
+- 方法一：创建数据源,然后将数据源转换为 Stream 流。
 - 方法二：通过 Arrays 中的 Stream() 方法来获取数组流。 
 - 方法三：通过Stream类中的 of() 方法获取流。
 - 方法四：创建无限流---项目不停，流就一直不断，可以使用 limit(num) 方法来限定生成多少流。
@@ -2364,7 +2375,7 @@ Stream 操作是延迟执行的，这意味着他们会等到需要的结果的�
 **代码为：**
 
 ```java
-@Test
+	@Test
 	public void test1()
 	{
 		//方法一：创建数据源,然后将数据源转换为 Stream 流
@@ -2381,6 +2392,9 @@ Stream 操作是延迟执行的，这意味着他们会等到需要的结果的�
         //迭代
 		Stream<Integer> stream4 = Stream.iterate(0, (x) -> x+2 );
 		stream4.limit(10).forEach(System.out::println);
+        
+        //生成区间的流,创建一个区间为1~10的流
+		IntStream range = IntStream.range(1, 10);
 		
 		//生成
 		Stream<Double> stream5 = Stream.generate(() -> Math.random());
@@ -2431,51 +2445,51 @@ Stream 操作是延迟执行的，这意味着他们会等到需要的结果的�
 
 **方法为：**  
 
-- map(Function f) 					接收一个函数作为参数，该函数会被应用到每个
-               		​    元素上，并将其映射成一个新的元素。
-- mapToDouble(ToDoubleFunction f) 	接收一个函数作为参数，该函数会被应用到每个
-                     ​    ​    元素上，产生一个新的 DoubleStream。 
-- mapToInt(ToIntFunction f) 			接收一个函数作为参数，该函数会被应用到每个
-                    ​    ​    元 素上，产生一个新的 IntStream。 
-- mapToLong(ToLongFunction f) 		接收一个函数作为参数，该函数会被应用到每个
-                    ​    ​    元素上，产生一个新的 LongStream。
-- flatMap(Function f) 					接收一个函数作为参数，将流中的每个值都换成
-                    ​    ​    另 一个流，然后把所有流连接成一个流。
+> - map(Function f) 					接收一个函数作为参数，该函数会被应用到每个
+>     		​    元素上，并将其映射成一个新的元素。
+> - mapToDouble(ToDoubleFunction f) 	接收一个函数作为参数，该函数会被应用到每个
+>       ​    ​    元素上，产生一个新的 DoubleStream。 
+> - mapToInt(ToIntFunction f) 			接收一个函数作为参数，该函数会被应用到每个
+>       ​    ​    元 素上，产生一个新的 IntStream。 
+> - mapToLong(ToLongFunction f) 		接收一个函数作为参数，该函数会被应用到每个
+>       ​    ​    元素上，产生一个新的 LongStream。
+> - flatMap(Function f) 					接收一个函数作为参数，将流中的每个值都换成
+>       ​    ​    另 一个流，然后把所有流连接成一个流。
 
 **代码为：**  
 
 
 ```java
 @Test
-	public void test1(){
-		Stream<String> str = emps.stream().map((e) -> e.getName());
+public void test1(){
+    Stream<String> str = emps.stream().map((e) -> e.getName());
 
-		List<String> strList = Arrays.asList("aaa", "bbb", "ccc", "ddd", "eee");
-		
-		Stream<String> stream = strList.stream()
-			   .map(String::toUpperCase);
-		stream.forEach(System.out::println);
-		
-		Stream<Stream<Character>> stream2 = strList.stream()
-			   .map(TestStreamAPI1::filterCharacter);
-		stream2.forEach((sm) -> {
-			sm.forEach(System.out::println);
-		});
-		
-		Stream<Character> stream3 = strList.stream()
-			   .flatMap(TestStreamAPI1::filterCharacter);
-		
-		stream3.forEach(System.out::println);
-	}
+    List<String> strList = Arrays.asList("aaa", "bbb", "ccc", "ddd", "eee");
 
-	public static Stream<Character> filterCharacter(String str){
-		List<Character> list = new ArrayList<>();
-		
-		for (Character ch : str.toCharArray()) {
-			list.add(ch);
-		}
-		return list.stream();
-	}
+    Stream<String> stream = strList.stream()
+        .map(String::toUpperCase);
+    stream.forEach(System.out::println);
+
+    Stream<Stream<Character>> stream2 = strList.stream()
+        .map(TestStreamAPI1::filterCharacter);
+    stream2.forEach((sm) -> {
+        sm.forEach(System.out::println);
+    });
+
+    Stream<Character> stream3 = strList.stream()
+        .flatMap(TestStreamAPI1::filterCharacter);
+
+    stream3.forEach(System.out::println);
+}
+
+public static Stream<Character> filterCharacter(String str){
+    List<Character> list = new ArrayList<>();
+
+    for (Character ch : str.toCharArray()) {
+        list.add(ch);
+    }
+    return list.stream();
+}
 ```
 
 **c）排序**  
@@ -2489,24 +2503,24 @@ Stream 操作是延迟执行的，这意味着他们会等到需要的结果的�
 **代码为：**
 
 ```java
-    @Test
-	public void test2(){
-		emps.stream()
-			.map(Employee::getName)
-			.sorted()
-			.forEach(System.out::println);
-		
-		System.out.println("------------------------------------");
-		
-		emps.stream()
-			.sorted((x, y) -> {
-				if(x.getAge() == y.getAge()){
-					return x.getName().compareTo(y.getName());
-				}else{
-					return Integer.compare(x.getAge(), y.getAge());
-				}
-			}).forEach(System.out::println);
-	}
+@Test
+public void test2(){
+    emps.stream()
+        .map(Employee::getName)
+        .sorted()
+        .forEach(System.out::println);
+
+    System.out.println("------------------------------------");
+
+    emps.stream()
+        .sorted((x, y) -> {
+            if(x.getAge() == y.getAge()){
+                return x.getName().compareTo(y.getName());
+            }else{
+                return Integer.compare(x.getAge(), y.getAge());
+            }
+        }).forEach(System.out::println);
+}
 ```
 
 
@@ -2523,19 +2537,3 @@ stream1.forEach(System.out::println);
 ```
 
 
-
-
-### XML--可扩展标记语言
-#### 1、简介：
-xml是用文本来描述数据的文档。
-
-#### 2、用途：
-- 充当显示数据
-- 存储数据
-- 以XML方式来描述数据，并在联系服务器与系统的其他部分之间传输。
-
-总之：xml是数据封装和数据消息传递的技术。
-
-#### 3、解析XML传输过来的数据
-##### 使用SAX来解析XML数据：
-SAX用于读取与操作xml数据的方式，SAX语序在读取文档的时候去处理它，从而不必要在整个文档存储之后才采取数据操作。SAX API是一个基于事件的API，适用于处理数据流，即随着数据的流动而依次处理数据。

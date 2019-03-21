@@ -396,7 +396,7 @@ public boolean isOpen() {
 - **`exchange`** 交换器的名称。
 - **`type`** 交换器的类型，在重载方法里面有枚举对象(**BuiltinExchangeType**)作为参数。
 
-- **`durable`** 设置是否持久化。
+- **`durble`** 设置是否持久化。
   - true ： 表示将其设置为持久化的 Exchange。
   - false：表示将其设置为非持久化分Exchange。
 - **`autoDelete`** 设置是否自动删除。
@@ -473,11 +473,13 @@ Queue.DeclareOk queueDeclare(String queue,
 ​	参数详情：
 
 - **`queue`** 队列的名称。
-- **`durable`** 设置是否进行持久化。
+- **`durble`** 设置是否进行持久化。
+
   - true：将队列设置为持久化。
   - false：将队列设置为非持久化。
 
-- **`exclusive`** 设置是否具有排他性。
+- **`exclsive`** 设置是否具有排他性。
+
   - true：将其设置为队列排他性。表示的意思是该队列对首次声明它的连接可见，并在连接断开时自动删除。
   - false：将其设置为非排他性。
 
@@ -762,4 +764,548 @@ public static void main(String[] args) throws IOException, TimeoutException {
 
 
 
-​	
+### 四 RabbitMQ进阶
+
+#### 4.1 消息去来
+
+​	**`mandatory`**和**`immediate`**是channel.basicPublish() 方法中的两个参数,其功能为：**当消息传递过程中不可达目的地时将消息返回给生产者的功能**。RabbitMQ提供了备份交换器（Alternate Exchange）可以将未能被交换器路由的消息存储起来。
+
+##### 4.1.1 mandatory参数
+
+​	**`mandatory`**参数，交换器无法根据自身的类型和路由键找到一个符合条件的队列：
+
+- **true**：RabbitMQ将会调用 Basic.Return() 命令将消息返回给生产者。
+
+- **false**：RabbitMQ将消息直接丢弃。
+
+  生产者需要重新获取没有被正确路由的消息，可以使用 channel.addReturnListener来添加ReturnListener监听器实现。例如：
+
+  ```java
+  channel.addReturnListener(new ReturnListener() {
+  	@Override public void handleReturn(int replyCode, String replyText, String exchange, String routingKey,AMQP.BasicProperties properties, byte[] body) throws IOException {
+  		String msg = new String(body);
+  		System.out.println("未能够正确将消息传递出去：" + msg);
+  	}
+  });
+  ```
+
+##### 4.1.2 immediate参数（少用）
+
+​	**`immediate`**参数设置，当与路由键匹配的所有队列都没有消费者时，该消息会通过Basic.Return返回至生产者。
+
+- **true**：当消息路由不存在消费者时，直接将消息返回给生产者。
+- **false**：当消息的路由不存在消费者，也会将消息放置在队列中等待。
+
+##### 4.1.3 备份交换机
+
+​	 备份交换机（Alternate Exchange），其主要的作用：当生产者发送消息携带了**`mandatory`**参数，则有两种处理方式：
+
+- 第一种，在生产者代码中添加ReturnListener的编程逻辑。
+- 第二种，使用备份交换机，将未被路由的消息存储在RabbitMQ中，再在需要的时候去处理它。
+
+
+
+#### 4.2 过期时间（TTL）
+
+​	TTL，Time To Live的简称，即过期时间。RabbitMQ可以对消息和队列设置TTL。
+
+##### 4.2.1 设置消息TTL
+
+- 方式一：通过队列属性设置，队列中的所有消息都有着相同的过期时间。
+
+  ```java
+  Map<String,Object> map = new HashMap<String,Object>();
+  map.put("x-message-ttl", 6000);
+  channel.queueDeclare(QUEUE_NAME, true, false, false, map);
+  ```
+
+  
+
+- 方式二：针对消息本身进行单独设置，每一条消息TTL都可以不同。
+
+  ```java
+   AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties().builder();
+   builder.deliveryMode(2);
+   builder.expiration("60000");
+   AMQP.BasicProperties properties = builder.build();
+   channel.basicPublish(EXCHANGE_NAME, QUEUE_NAME, true, properties,  message.getBytes();
+  
+                        
+   
+  ```
+
+  **注意：**当同时具有两种时间，则消息的TTL将以两者之间较小的一个数值为准。消息在队列中一旦超出TTL时间，则会自动变为“死信”，消费者无法再收到该消息。
+
+#### 4.3 死信队列（DLX）
+
+​	死信队列（DLX），也称为 “死信交换器”。消息变成死信队列的情况：
+
+- 消息过期。
+
+- 消息拒绝。
+
+- 队列长度达到最大。
+
+  设置死信队列的方式：
+
+  ```java
+  channel.exchangeDeclare("dlx_exchange", "direct");
+  //指定哪一个是死信交换器
+  map.put("x-dead-letter-exchange", "dlx_exchange");
+  //指定路由键，可以默认使用远队列路由键
+  map.put("x-dead-letter-routing-key", "dlx-routing-key");
+  channel.queueDeclare("dlx_queue", false, false, false, map);
+  
+  ```
+
+  使用死信交换器来存放死信数据，待到超时，直接将数据存放到死信队列中。使用方式为：
+
+  ```java
+  //得到Channel
+  Channel channel = connection.createChannel();
+  //创建一个死信交换机
+  channel.exchangeDeclare("exchange.dlx", BuiltinExchangeType.DIRECT, true);
+  //创建一个正常的交换器
+  channel.exchangeDeclare("exchange.normal", BuiltinExchangeType.FANOUT, true);
+  Map<String, Object> map = new HashMap<String, Object>();
+  map.put("x-message-ttl", 10000);
+  map.put("x-dead-letter-exchange", "exchange.dlx");
+  map.put("x-dead-letter-routing-key", "routingKey");
+  //绑定队列
+  channel.queueDeclare("queue.normal", true, false, false, map);
+  channel.queueBind("queue.normal", "exchange.normal", "");
+  channel.queueDeclare("queue.dlx", true, false, false, null);
+  channel.queueBind("queue.dlx", "exchange.dlx", "routingKey");
+  
+  //发送一条消息
+  String message = "我的第一个rabbitmq项目";
+  
+  channel.basicPublish("exchange.normal", "rk", MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+  
+  ```
+
+  ![1552958532723](assets/1552958532723.png)
+
+
+
+#### 4.4 延迟队列
+
+##### 4.4.1 基本介绍
+
+​	**延迟队列存储的对象是对应的延迟消息**。”延迟消息“指的是生产者将消息发送以后，并不想让消费者立即拿到消息，而是在特定的时间以后，消费者才能拿到这个消息进行消费。
+
+##### 4.4.2 使用场景
+
+- 订单系统中，用户下单以后再30分钟之内都能够进行支付。如果30分钟未能够完成支付工作，则需要将这条订单数据进行异常处理。使用延迟队列即可处理。
+- 用户希望通过手机远程遥控家里的智能设备定时工作任务，可以使用延迟队列推送指令。
+
+##### 4.4.3 使用方式
+
+​	<font style="color: red">RabbitMQ没有直接支持延迟队列的功能。</font>
+
+​	RabbitMQ只能够使用 **死信队列（DLX）+ 过期时间（TTL）**来模拟延迟队列功能。
+
+​	通常情况下，将设置有过期时间（这里类比于延迟时间）的消息发送至对应的正常队列中，但是没有对应的消费者，则会在消息过期的时候将数据存放到对应的死信队列里，消费者直接消费死信队列中的信息即可实现延迟队列的功能。
+
+![1552959699540](assets/1552959699540.png)
+
+#### 4.5 优先级
+
+​	优先级队列表示的是**高优先级的队列具有高的优先权**，**优先级高的消息具有有限被消费的特权**。
+
+##### 4.5.1 优先级队列
+
+​	在参数args中使用 **`x-max-priority`** 来设置队列优先级。
+
+```java
+Map<String,Object> map = new HashMap<String,Object>();
+//设置队列的优先级
+map.put("x-max-priority", 10);
+
+Channel channel = connection.createChannel();
+channel.exchangeDeclare(EXCHANGE_NAME, "direct", true, false, null);
+channel.queueDeclare(QUEUE_NAME, true, false, false, map);
+```
+
+##### 4.5.2 优先级消息
+
+​	使用的是BasicProperties参数来设置消息的优先级。
+
+```java
+//设置消息优先级
+AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties().builder();
+builder.priority(5);
+AMQP.BasicProperties build = builder.build();
+channel.basicPublish(EXCHANGE_NAME,	ROUTING_KEY, build, message.getBytes());
+```
+
+​	优先级消息具有优先被消费的特权，但是：在消费者消费消息的速率大于生产者的速率，且Broker中没有消息堆积的情况下，对发送的消息设置优先级是没有意义的。
+
+#### 4.6 消息持久化
+
+​	消息持久化的操作，主要是用于提高RabbitMQ的可靠性，以防止异常情况(重启、关闭、宕机等)消息数据丢失。持久化主要分为三个部分：
+
+- 交换器Exchange持久化。将durable参数设置为true即可实现持久化，重启RabbitMQ以后，相关的交换器元数据、消息都不会丢失。
+
+- 队列Queue持久化。将durable参数设置为true即可实现持久化，相关元数据、消息都会丢失。
+
+- 消息Message持久化。设置消息的投递模式BasicProperties中的deliverMode属性为2进行持久化，MessageProperties.PERSISTENT TEXT PLAIN也能够设置为持久化。
+
+  **注意：** 
+
+- 消息持久化以后，重启RabbitMQ服务器以后消息仍然存在。
+
+- 队列持久化而消息没有进行持久化的设置，则重启RabbitMQ服务器以后消息会丢失。 
+
+- 消息持久化是将内存中的数据通过I/O操作写入到本地磁盘中进行保存，会严重影响RabbitMQ的性能。
+
+#### 4.7 镜像队列
+
+​	RabbitMQ的镜像队列机制，相当于是配置了多个副本，如果主节点（Master）在特殊事件内宕机以后，其他从节点会自动切换为主节点，保证集群的高可用性。
+
+#### 4.8 生产者确认
+
+​	生产者将消息发送给RabbitMQ服务器，为了确保生产者发送的消息正确的发送到了RabbitMQ中，需要通过两种方式解决：
+
+- 通过事务机制确认（容易降低性能，不常用）。
+- 通过发送方确认机制实现（轻量级的机制，常用）。
+
+##### 4.8.1 事务机制
+
+​	RabbitMQ中国的事务机制相关方法有三个：
+
+- **`channel.txSelect`** ：将当前信道设置为事务模式。
+- **`channel.txCommit`** ：用于提交事务。
+- **`channel.txRollback`** ：用于事务回滚操作。
+
+```java
+try {
+    //开启事务
+    channel.txSelect();
+    channel.basicPublish(EXCHANGE_NAME, ROUTING_KEY, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+    //提交事务
+	channel.txCommit();
+} catch (Exception ex) {
+    System.out.println("[.]"+ex.toString());
+    //如果出现异常情况，则执行 事务回滚操作。
+	channel.txRollback();
+} finally {
+    //关闭对应的资源数据
+    channel.close();
+    connection.close();
+}
+```
+
+​	RabbitMQ采用事务来发送消息，当事务未能够提交成功，则需要进行事务的回滚操作，与此同时可以进行消息的重新发送操作。可是这样子可能进入一个恶性循环，造成RabbitMQ性能损失。
+
+##### 4.8.2 发送方确认机制
+
+​	发送方确认（publish confirm）机制，其实现原理是将信道设置为confirm模式，一旦信道进入confirm模式，该信道上面的消息豆浆被指派一个唯一的ID，一旦消息被投递成功，RabbitMQ就会发送一个确认（Basic.Ack，包含生成的唯一ID）给生产者即可。如果消息和队列是可持久化的，那么Ack返回会在写入磁盘之后返回。
+
+​	confirm模式最大的优势在于：异步操作，生产者发送消息以后，能够继续发送下一条消息而不用等待确认消息的返回。
+
+- **普通的confirm操作：**
+
+```java
+try {
+    //开启confirm
+    channel.confirmSelect();
+    //发送多条数据
+    for (int i = 0; i < 10; i++) {
+        channel.basicPublish(EXCHANGE_NAME, ROUTING_KEY, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+        //验证是否有返回的唯一id
+        if (!channel.waitForConfirms()) {
+            System.out.println("send message failed");
+            //重新进行一些操作
+            //...
+        }
+    }
+} catch (InterruptedException ex) {
+    System.out.println("[.]"+ex.toString());
+    //如果出现异常情况，则执行 事务回滚操作。
+    channel.txRollback();
+} finally {
+    //关闭对应的资源数据
+    channel.close();
+    connection.close();
+}
+```
+
+- **批量confirm操作方法：**
+
+```java
+//开启confirm
+channel.confirmSelect();
+//发送多条数据
+for (int i = 0; i < 10000; i++) {
+    message = message + i;
+    channel.basicPublish(EXCHANGE_NAME, ROUTING_KEY, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+    list.add(message);
+    //验证是否有返回的唯一id
+    try {
+        if (num.getAndIncrement() >= sum) {
+            num.getAndSet(0);
+            //如果发送成功，则需要清空list中的数据
+            if (channel.waitForConfirms()) {
+                list.clear();
+            } else {
+                //重新发送消息
+            }
+        }
+    } catch (InterruptedException ex) {
+        //重新发送消息
+    }
+}
+```
+
+#### 4.9 消息分发
+
+​	**`channel.basicQos`** 用于设置消费者队列进行消费。RabbitMQ会保存对应的消费者队列，每发送一条消息，则对应的消费者队列数量+1，消费者返回Ack以后，数量-1；当等于设置的Qos的时候，停止向对应的消费者发送消息。
+
+##### 4.9.1 方法重载
+
+```java
+void basicQos(int prefetchSize, int prefetchCount, boolean global) throws IOException;
+
+void basicQos(int prefetchCount, boolean global) throws IOException;
+
+void basicQos(int prefetchCount) throws IOException;
+```
+
+​	参数介绍：
+
+- **`prefetchCount`** ：允许消费者未返回的Ack最大数量。
+- **`prefetchSize`**：消费者所能接收未确认消息的总体大小的上线。
+- **`global`**：true表示 信道上所有的消费者都需要准从上限值。
+
+​	使用方式：
+
+```java
+	channel.basicQos(6);
+```
+
+#### 4.10 消息传输保障
+
+- 生产者开启事务模式或者publisher confirm机制，用以确保消息可以可靠的传输到RabbitMQ中。
+- 生产者需要配合使用mandatory参数或者备份交换器来确保消息进行实体化的存储。
+- 消息和队列都需要进行持久化处理，用以却白RabbitMQ服务器在遇到异常情况下不会丢失。
+- 消费者消费消息的同时需要将autoAck设置为false，然后通过手动确认的方式确认收到消息。
+
+
+
+### 5 RabbitMQ管理
+
+#### 5.1 权限管理
+
+##### 5.1.1 多租户与权限
+
+​	每一个RabbitMQ都能够创建虚拟的消息服务器，称之为 虚拟主机（virtual host）。每一个vhost相当于就是一个小型的RabbitMQ服务器，拥有着自己的队列、交换器绑定关系等。vhost相当于物理机中的虚拟机，能够保证逻辑之上的物理隔离操作。
+
+​	vhost是AMQP的基本概念，客户端连接RabbitMQ必须要指定对应的vhost主机。RabbitMQ默认的vhost是 “/” 。
+
+#### 5.1.2 创建vhost
+
+- **`rabbitmqctl add_vhost vhost1`**  添加一个vhost。
+- **`rabbitmqctl list_vhosts`** 查看所有的vhost。
+- **`rabbitmqctl delete_vhost vhost1`** 删除虚拟机vhost。
+
+5.1.3 授权vhost
+
+​	RabbitMQ中针对vhost授权，来进行权限的控制。所以授权的单位是vhost。
+
+​	相关命令：
+
+- **`rabbitmqctl set_permissions  [-p vhost] {user} {conf} {write}  {read}`**
+
+  参数介绍：
+
+  - vhost ： 授权用户访问权限的vhost名称，默认值为 “/” 。
+  - user ：可以访问指定vhost的用户名。
+  - conf ：一个用于匹配用户在哪些资源上面可拥有**可配置**的正则表达式。可配置指的是队列与交换器的创建、删除等操作。
+  - write ： 一个用于匹配用户在哪些资源上拥有**可写**权限的正则表达式。可写指的是发布消息。
+  - read ： 一个用于匹配用户在哪些资源上拥有**可读**权限的正则表达式。可读指的是读取、清空消息队列等操作。
+
+  例如：
+
+  ```shell
+  # 配置针对vhost1虚拟主机的zsl用户，只能够有 queue.* 开头的可读可写的权限
+  rabbitmqctl set_permissions -p vhost1 zsl "^queue.*" ".*" ".*"
+  
+  # 配置root用户拥有着所有的可读可写的权限
+  rabbitmqctl set_permissions -p vhost1 root ".*" ".*" ".*"
+  ```
+
+##### 5.1.4 清除权限
+
+​	清除权限是针对vhost级别的用户而言的。清除权限的命令：
+
+- **`rabbitmqctl clear_permission [-p vhost] {username}`**
+
+  参数介绍：
+
+  - vhost ： 针对的虚拟主机的名称，默认是 “/” 虚拟主机。
+  - username ： 禁止访问特定虚拟主机的用户名称。
+
+##### 5.1.5 其他权限操作
+
+- **`rabbitmqctl list_permissions [-p vhost]`** 显示vhost虚拟主机上的权限。
+- **`rabbitmqctl list_user_permissions {username}`** 显示用户的权限。
+
+#### 5.2 用户管理
+
+##### 5.2.1 基本命令
+
+​	用户管理是访问权限控制（Access Control）的基本单元。且单个用户可以跨越多个vhost进行不同级别的授权操作。
+
+- **`rabbitmqctl add_user root root`**  新增用户root，密码为 root
+- **`rabbitmqctl set_permissions -p / root ".*" ".*" ".*"`**  设置用户权限
+- **`rabbitmqctl set_user_tags root adminstrator`**  设置root用户为管理员
+
+- **`rabbitmqctl change_password {username} {new pwd}`** 更改用户密码
+- **`rabbitmqctl clear_password {username}`** 清除用户密码
+- **`rabbitmqctl authenticate_user {username} {password}`** 验证用户的密码
+- **`rabbitmqctl delete_user {username}`** 删除对应的用户
+
+- **`rabbitmqctl list_users`** 查看所有的用户
+
+##### 5.2.2 用户角色
+
+- **`none`** ：无任何角色，新创建的用户角色默认为 none。
+- **`management`** ：可以访问 Web管理界面。
+- **`policymaker`** ：包含management的所有权限，并且可以管理策略(Ploicy)和参数(Parameter)。
+- **`monitoring`** ：包含management的所有权限，并且可以查看到所有连接、信道、节点等信息。
+- **`administartor`** ：包含monitoring的所欲权限，且可以管理用户、vhost、权限、策略、参数等。
+
+##### 5.2.3 设置用户角色
+
+- **`rabbitmqclt set_user_tags {username} {tag ...}`** 设置用户具有的角色，可设置多个角色。
+
+  例如：
+
+  ```shell
+  rabbitmqctl set_user_tags zsl tag management
+  ```
+
+#### 5.3 应用管理
+
+- **`rabbitmqctl stop [pid_file]`** 停止Erlang虚拟机与RabbitMQ服务应用。
+- **`rabbitmqctl shutdown`** 停止Erlang虚拟机与RabbitMQ服务应用，会阻塞知道Erlang虚拟机进程退出。
+- **`rabbitmqctl stop_app`** 停止RabbitMQ服务，但是Erlang虚拟机仍然运行。
+- **`rabbitmqctl start _app`** 重启停止的RabbitMQ服务。
+- **`rabbitmqctl wait [pid_file]`** 等待RabbitMQ应用的启动。
+
+- **`rabbitmqctl reset`** 将RabbitMQ节点重置还原为最初状态，相当于格式化。需要先停止RabbitMQ应用。
+- **`rabbitmqctl force_reset`** 强制将RabbitMQ节点重置为最初状态。也需要停止RabbitMQ应用。
+- **`rabbitmqctl rotate_logs {suffix}`** 指示RabbitMQ节点轮换日志文件。
+
+#### 5.4 集群管理
+
+- **`rabbitmqctl join_cluster {cluster_node} [--ram]`** 将指定的节点加入到指定的集群中。这个命令需要停止RabbitMQ应用并重置节点。
+- **`rabbitmqctl cluster_status`** 显示集群状态信息。
+- **`rabbitmqctl forget_cluster_node [--offine]`** 将节点从急群众删除。
+- **`rabbitmqctl change_cluster_node_type {disc|ram}`** 修改集群节点类型。 
+- **`rabbitmqctl update_cluster_nodes {clusterenode}`** 更新集群记录信息。
+
+- **`rabbitmqctl force_boot`** 确保节点可以正常的进行启动。
+
+- **`rabbitmqctl sync_queue [-p vhost] {queue}`** 指定未同步队列queue的slave镜像可以同步master镜像的数据。
+
+#### 5.5 服务端状态
+
+- **`rabbitmqctl list_queues [-p vhost] [queueinfoitem ...]`** 返回对应的vhost虚拟机中所有队列的详细信息。queueinfoitem可以指定的参数：
+  - name：队列名称。
+  - durable：队列是否持久化。
+  - auto_delete：队列是否自动删除。
+  - arguments：队列的参数。
+  - policy：应用到队列上的策略名称。
+  - pid：队列关联的Erlang进程的PID。
+  - owner_pid：处理排他队列连接的Erlang进程ID，如果是排他的，则此值为空。
+  - exclusive：队列是否是排他的。
+  - messages：准备发送给客户端和未应答的总和。
+
+- **`rabbitmqctl list_exchanges [-p vhost] [exchangeinfoitem ...]`** 返回交换器的详细信息。exchangeinfoitem 参数可以指定为：
+  - name：队列名称。
+  - durable：队列是否持久化。
+  - auto_delete：队列是否自动删除。
+  - type：交换器类型。
+  - internal：是否是内置的。
+  - arguments：其他一些结构化参数。
+  - policy：应用到交换器上的策略名称。
+
+- **`rabbitmqctl list_bindings [-p vhost] [bindinginfoitem]`** 返回绑定关系的细节。可以指定的参数包括：
+  - source_name：绑定中消息来源的名称。
+  - source_kind：绑定中消息来源的类别。
+  - destination_name：绑定中消息目的地的名称。
+  - destination_kind：绑定中消息目的地的种类。
+  - routing_key：绑定的路由键。
+  - arguments：绑定的参数。
+
+- **`rabbitmqctl list_connections [connectioninfoitem]`** 返回TCP/IP连接的统计信息。可以指定的参数包括：
+  - pid：与连接相关的Erlang进程id。
+  - name：连接的名称。
+  - port：服务器端口号。
+  - host：返回反向DNS获取的服务器主机名称，或者IP地址。
+  - peer_port：服务器对端端口。
+  - ssl：是否启动SSL。
+  - channels：该连接中的信道个数。
+  - user：连接相关的用户名。
+  - vhost：连接相关的vhost名称。
+  - timeout：连接超时、协商的心跳间隔，单位为秒。
+- **`rabbitmqctl list_channels [channelinfoitem]`** 返回当前所有信道的信息。
+  - pid: 与连接相关的Erlang 进程ID 。
+  - connection : 信道所属连接的Erlang 进程ID 。
+  - -name : 信道的名称。
+  - number: 信道的序号。
+  - user: 与信道相关的用户名称。
+  - vhost : 与信道相关的vhost
+  - transactional: 信道是否处于事务模式。
+  - confirm : 信道是否处于publisher confirm 模式。
+  - consumer count : 信道中的消费者的个数。
+  - messages_unacknowledged: 己投递但是还未被ack 的消息个数。
+  - messages uncommitted : 己接收但是还未提交事务的消息个数。
+  - acks uncomm i tted : 己ack 收到但是还未提交事务的消息个数。
+  - messages unconfirmed : 己发送但是还未确认的消息个数。如果信道不处于
+    publisher confmn 模式下，则此值为0 。
+  - perfetch co u nt : 新消费者的Qos 个数限制。0 表示无上限。
+  - global_prefetch_coun t: 整个信道的Qos 个数限制。0 表示无上限。
+
+- **`rabbitmqctl list_consumers [-p vhost]`** 返回消费者的所有信息。
+- **`rabbitmqctl status`** 显示Broker的状态信息。
+- **`rabbitmqctl node_health_check`** 对RabbitMQ节点进行健康检查，确认应用是否正常。
+- **`rabbitmqctl enviroment`** 显示每个运行程序环境中每一个变量的名称和值。
+- **`rabbitmqctl report > status.txt`** 为所有的服务器状态生成一个服务器状态报告，并定向到文件中。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
