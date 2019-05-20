@@ -1349,6 +1349,9 @@ char[] cc = ss.toCharArray();
 String ss = new String(cc);
 ```
 
+**7）String.intern()方法**
+
+> ​	intern()方法主要是：如果在字符串常量池中已经包含一个等于此String对象的字符串，则返回代表池中这个字符串的String对象；否则此String对象包含的字符串添加到常量池中，并且返回此String对象的引用。
 
 #### 2、StringBuffer类
 
