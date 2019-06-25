@@ -771,7 +771,7 @@ public class Proxy implements Sourceable {
 }
 ```
 
-#### 5.5 jdk动态代理--基于接口
+#### 5.5 JDK动态代理--基于接口
 
 ##### 5.5.1 基本介绍
 
