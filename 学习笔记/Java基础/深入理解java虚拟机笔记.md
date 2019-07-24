@@ -91,7 +91,7 @@
 >
 > ![1558254801052](assets/1558254801052.png)
 >
-> ​	句柄的最大优势在于reference中存储的是稳定的句柄地址，在对象被移动（垃圾收集时移动对象是非常普遍的行为）时只会改变句柄中的实例数据指针，而不是修改reference本身。
+> ​	句柄的最大优势在于reference中存储的是稳定的句柄地址，在对象被移动（垃圾收集时移动对象是非常普遍的行为）时只会改变句柄中的实例数据指针，而不是修改Reference本身。
 >
 > ​	直接指针访问的优势在于访问速度更快，节省了一次指针定位的时间开销工作。HotSpot虚拟机采用的是直接指针方式。
 
@@ -130,13 +130,11 @@ public class JconsoleTest {
 		JavaVMStackOOM jvom = new JavaVMStackOOM();
 		jvom.stackLeakByThread();
 	}
-	
 }
 
 /**
  * Stack对应的StackOverFlowError
  * @author 10838
- *
  */
 class JavaVMStackSOF {
 	private int stackLength = 1;
@@ -149,7 +147,6 @@ class JavaVMStackSOF {
 /**
  * Stack对应的OutOfMemoryError
  * @author 10838
- *
  */
 class JavaVMStackOOM {
 	private void dontStop() {

@@ -1,10 +1,9 @@
-[toc]
+[TOC]
 # Dubbo & Zk学习笔记
 ## 官方文档地址
 - Dubbo中文文档：http://dubbo.apache.org/en-us/
 
 - Zookeeper文档：https://zookeeper.apache.org/doc/current/index.html
-
 
 ---
 
@@ -56,7 +55,7 @@
 ### springboot整个dubbo的三种方式
 #### 第一种：使用注解@Service与@Reference,加上application.properties
 第一步：添加jar
-```
+```xml
 <dependency>
 	<groupId>com.alibaba.boot</groupId>
 	<artifactId>dubbo-spring-boot-starter</artifactId>
@@ -251,7 +250,6 @@ Dubbo的注册中心任意一台宕机以后，都会切换到另外一台继续
 #### 7、什么是RPC？
 RPC(Remote Procedure Call)是指远程调用过程，是一种进程的通信方式，它是一种技术的思想，而不是规范。  
 它允许程序调用另一个地址空间的资源，而不需要程序员显式的编码这个远程调用的细节。
-
 
 
 
