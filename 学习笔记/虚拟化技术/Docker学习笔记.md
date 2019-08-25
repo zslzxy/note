@@ -392,3 +392,79 @@ CMD /bin/bash
 - docker version  docker版本信息
 - docker info  docker基本信息
 - docker --help  docker帮助信息
+
+### 2. Docker镜像命令
+
+- **docker images**  列出所有镜像
+
+  - **`-a`**  列出本地所有镜像
+
+  - **`-q`**  只显示镜像id
+  - **`--digests`**  显示镜像的摘要信息
+  - **`--no-trunc`**  显示完整的镜像信息
+
+- **docker search 镜像名称**   查询对应的镜像
+
+  - **`--no-trunc`** 显示完整的镜像信息
+  - **`-s`**  列出收藏数不小于指定值的镜像
+
+- **docker pull 镜像名称:tag**   下载对应tag版本的镜像
+
+- **docker rmi  镜像名字**  
+
+  - **`docker rmi -f 镜像id`**  删除单个镜像
+
+  - **`docker rmi -f 镜像名1:tag  镜像名2:tag `**  删除多个镜像
+  - **`docker rmi -f ${docker images -qa}  `** 删除所有镜像
+
+### 3. Docker容器命令
+
+- **docker run [OPTIONS]  IMAGE  [COMMAND]**   新建并启动容器
+  - OPTIONS说明：
+    - **`--name=容器名称`**  为容器指定一个名称；
+    - **`-d`**  后台运行容器，并返回容器id，即以守护式方式启动容器；
+    - **`-i`**  以交互模式运行容器，通常与 **`-t`** 同时使用；例如：创建一个交互式容器，在容器中执行/bin/bash命令：docker run -it mysql -p 3307:3306 --name mysql_3307  /bin/bash   
+    - **`-t`**  为容器重新分配一个伪输入终端；
+    - **`-p`**  端口映射：
+      - ip:hostPort:containerPort
+      - ip::containerPort
+      - `hostPort:containerPort` 左边是宿主机，右边是容器
+      - containerPort
+
+- **docker ps [OPTIONS]**  列出所有的容器：
+
+  - **`-a`**  列出当前所有正在运行的容器 + 历史上运行过的容器；
+  - **`-l`**  显示最近创建的容器；
+  - **`-n`**  显示最近n个创建的容器；
+  - **`-q`**  静默模式，只显示容器编号；
+  - **`--no-trunc`**  不截断输出。
+
+- **退出容器：**
+
+  - **`exit`**  如果是以交互式启动的容器，则会停止容器并退出到宿主界面；如果是以守护方式启动的容器，则不会停止容器并退出到宿主界面；
+  - **`ctrl + p + q`**  容器不停止，并退出到宿主机界面；
+
+- **docker start  容器id或者容器名**   启动容器；
+
+- **docker restart 容器id或者容器名**  重启容器；
+
+- **docker  kill  容器名或者容器id **  强制停止容器；
+
+- **docker stop 容器id或者容器名** 停止容器；
+
+- **docker rm  容器id**  删除已经停止了的容器：
+
+  - **`docker rm -f ${docker ps -a -q}`**  删除多个已经停止了的容器；
+
+  -  **`docker rm 容器id1 容器id2`**  删除指定容器；
+
+
+
+
+
+
+
+
+
+
+
