@@ -379,3 +379,16 @@ EXPOSE 80
 CMD /bin/bash
 ```
 
+
+
+
+
+# Docker复学
+
+## 一 Docker常见命令
+
+### 1. Docker帮助命令
+
+- docker version  docker版本信息
+- docker info  docker基本信息
+- docker --help  docker帮助信息
