@@ -461,6 +461,93 @@ CMD /bin/bash
 
 
 
+## Dockerfile文件编写
+
+Dockerfile主要是用于创建一个镜像的文件，例如创建一个jdk8的镜像：
+
+第一步：创建Dockerfile文件
+
+```dockerfile
+FROM debian:stretch
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG JAVA_VERSION=8
+ARG JAVA_UPDATE=172
+ARG JAVA_BUILD=11
+ARG JAVA_PACKAGE=jdk
+ARG JAVA_HASH=a58eab1ec242421181065cdc37240b08
+
+ENV LANG C.UTF-8
+ENV JAVA_HOME=/opt/jdk
+ENV PATH=${PATH}:${JAVA_HOME}/bin
+
+RUN set -ex \
+ && apt-get update \
+ && apt-get -y install ca-certificates wget unzip \
+ && wget -q --header "Cookie: oraclelicense=accept-securebackup-cookie" \
+         -O /tmp/java.tar.gz \
+         http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION}u${JAVA_UPDATE}-b${JAVA_BUILD}/${JAVA_HASH}/${JAVA_PACKAGE}-${JAVA_VERSION}u${JAVA_UPDATE}-linux-x64.tar.gz \
+ && CHECKSUM=$(wget -q -O - https://www.oracle.com/webfolder/s/digest/${JAVA_VERSION}u${JAVA_UPDATE}checksum.html | grep -E "${JAVA_PACKAGE}-${JAVA_VERSION}u${JAVA_UPDATE}-linux-x64\.tar\.gz" | grep -Eo '(sha256: )[^<]+' | cut -d: -f2 | xargs) \
+ && echo "${CHECKSUM}  /tmp/java.tar.gz" > /tmp/java.tar.gz.sha256 \
+ && sha256sum -c /tmp/java.tar.gz.sha256 \
+ && mkdir ${JAVA_HOME} \
+ && tar -xzf /tmp/java.tar.gz -C ${JAVA_HOME} --strip-components=1 \
+ && wget -q --header "Cookie: oraclelicense=accept-securebackup-cookie;" \
+         -O /tmp/jce_policy.zip \
+         http://download.oracle.com/otn-pub/java/jce/${JAVA_VERSION}/jce_policy-${JAVA_VERSION}.zip \
+ && unzip -jo -d ${JAVA_HOME}/jre/lib/security /tmp/jce_policy.zip \
+ && rm -rf ${JAVA_HOME}/jar/lib/security/README.txt \
+       /var/lib/apt/lists/* \
+       /tmp/* \
+       /root/.wget-hsts
+```
+
+第二步：使用docker build 命令构建镜像：
+
+```dockerfile
+docker build -t debain-jdk8:v1.0 . 
+```
+
+#### Dockerfile命令
+
+| 指令         | 含义                                                         |
+| ------------ | ------------------------------------------------------------ |
+| FROM         | FROM debian:stretch表示以debian:stretch作为基础镜像进行构建。 |
+| RUN          | RUN后面跟的是一些shell指令，通过 && 将这些脚本连接在了一起执行，多个命令连接在一起构建，能够减少镜像构建层数。 |
+| ARG          | 该命令符主要是占位符的意思，在RUN命令中能够使用ARG中的名称来进行value的替换。 |
+| ENV          | 指令的作用是在shell中设置一些环境变量。                      |
+| FROM...AS... | 给一个阶段的镜像取别名  FROM....（基础镜像）AS...（别名）    |
+| COPY         | 用于来回复制文件， `COPY  宿主机目录  容器目录`  表示将当前文件夹的所有文件拷贝到对应的容器文件夹目录中。也可以使用 `--from` 参数来复制前一个阶段镜像中的文件。具体入下面的示例。 |
+| WORKDIR      | 在执行`RUN`后面的shell命令前会先`cd`进`WORKDIR`后面的目录    |
+| ENTRYPOINT   | 这个参数表示镜像的“入口”，镜像打包完成之后，使用docker run命令运行这个镜像时，其实就是执行这个ENTRYPOINT后面的可执行文件（一般是一个shell脚本文件），也可以通过["可执行文件", "参数1", "参数2"]这种方式来赋予可执行文件的执行参数，这个“入口”执行的工作目录也是WORKDIR后面的那个目录 |
+| ADD          | 将文件加入到容器指定位置  `ADD thymeleaf-master-1.0-SNAPSHOT.jar /thymeleaf-master.jar` |
+
+Dickerfile文件可以多阶段构建，其功能是为了解决docker镜像构建的中间冗余文件的处理。例如：
+
+```dockerfile
+# Builder container
+FROM registry.cn-hangzhou.aliyuncs.com/aliware2018/services AS builder
+
+COPY . /root/workspace/agent
+WORKDIR /root/workspace/agent
+RUN set -ex && mvn clean package
+
+
+# Runner container
+FROM registry.cn-hangzhou.aliyuncs.com/aliware2018/debian-jdk8
+
+COPY --from=builder /root/workspace/services/mesh-provider/target/mesh-provider-1.0-SNAPSHOT.jar /root/dists/mesh-provider.jar
+COPY --from=builder /root/workspace/services/mesh-consumer/target/mesh-consumer-1.0-SNAPSHOT.jar /root/dists/mesh-consumer.jar
+COPY --from=builder /root/workspace/agent/mesh-agent/target/mesh-agent-1.0-SNAPSHOT.jar /root/dists/mesh-agent.jar
+
+COPY --from=builder /usr/local/bin/docker-entrypoint.sh /usr/local/bin
+COPY start-agent.sh /usr/local/bin
+
+RUN set -ex && mkdir -p /root/logs
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+```
+
 
 
 
