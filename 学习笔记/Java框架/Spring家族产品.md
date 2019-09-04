@@ -238,44 +238,184 @@ JSR250的规范(是java的规范，不是spring的注解)
 @Resource(name="bookService")
 
 
-### 六、AOP【动态代理】
-#### 1、简介：
-指在程序运行期间动态的将 某段代码 切入 到 指定方法 的指定位置进行运行的编程方式。
-#### 2、AOP的分类：
-1）前置通知(@Before)：目标方法(切入点的位置)运行之前执行
+### 六、Spring AOP
+#### 1.简介
 
-2）后置通知(@After)：目标方法(切入点的位置)运行之后执行
+> Spring AOP使用过另一种思考程序结构的方式来补充面向对象编程（OOP）。使用的是跨越多种类型和对象来进行事务管理之类的关注点和模块化。
+>
+> Spring AOP引入了 <a>schema-based approach</a>与<a>@AspectJ annotation style</a> 编写自定义方面的更简单、强大的方法。
 
-3）返回通知(@AfterReturning)：目标方法(切入点的位置)正常运行并返回之后执行
+##### 1.1 AOP概念
 
-4）异常通知(@AfterThrowing)：目标方法(切入点的位置)运行异常之后执行
+> Spring AOP的概念 主要是通过切入点匹配连接点，将其与仅仅提供
 
-5）环绕通知(@Around)：动态代理，手动推动目标方法的运行
+- 方面： 跨越多个类的关注点和模块化。事务管理是企业java应用程序中横切关注点的重要作用。
+- 加入点（连接点）：程序执行期间的一个点，例如执行方法或处理异常等。在Spring AOP中，连接点始终表示方法执行。
+- 建议：某个方面在特定连接点才去的操作。Spring AOP将建议建模为拦截器，在连接点周围维护一系列拦截器。包括 “around”、“before”、“after”等。建议类型包括：
+  - 在建议之前：在连接点之前执行但是不能阻止执行流程进入连接点的建议。
+  - 返回建议后：在连接点正常完成后执行的建议。
+  - 抛出建议后：如果方法抛出异常，则执行建议。
+  - 建议之后：无论是正常退出还是异常退出，都会执行建议。
+  - 围绕建议：around通知可以在方法调用之前与之后执行自定义行为。负责选择是继续加入还是通过返回自己的返回值或抛出异常来快速建议的方法执行。
+- 切入点：匹配连接点的谓词。建议与切入点表达式相关联，并在切入点匹配的人和连接点处运行。由切入点匹配的任何连接点处运行。Spring AOP默认采用的是AspectJ切入点表达式语言。
+- 简介：代表类型声明其他方法或字段，
+- 目标对象：由一个或者多个方面建议的对象，也称为建议对象。Spring AOP是使用运行时动态代理实现的，所以目标对象始终是代理对象。
+- AOP代理：由AOP框架创建的对象，用于实现方面Contract（建议方法执行等）。AOP采用的是JDK动态代理与CGLIB代理。
+- 编织：将方面与其他应用程序类型或对象链接以创建建议对象。Spring AOP在运行时执行编织。
 
-术语 |	描述
----|---
-方面/切面(Aspect) |	一个具有一组API的模块，提供交叉要求。例如，日志记录模块被称为AOP方面用于记录。应用程序可以根据需要具有任意数量的方面。
-加入点(Join point) |	这表示您的应用程序中可以插入AOP方面的一点。也可以说，这是应用程序中使用Spring AOP框架采取操作的实际位置。
-通知(Advice) |	这是在方法执行之前或之后采取的实际操作。 这是在Spring AOP框架的程序执行期间调用的实际代码片段。
-切入点(Pointcut) |	这是一组一个或多个连接点，其中应该执行通知(Advice)。 您可以使用表达式或模式指定切入点，我们将在AOP示例中看到。
-介绍(Introduction) |	介绍允许向现有类添加新的方法或属性。
-目标对象(Target object) |	对象被一个或多个方面通知(Advice)，该对象将始终是代理的对象。也称为通知(Advice)对象。
-编织(Weaving) |	编织是将方面与其他应用程序类型或对象进行链接以创建通知(Advice)对象的过程。这可以在编译时，加载时间或运行时完成。
+1.2 Spring AOP功能概要
 
+> Spring  AOP采用的是纯java代码实现的。不需要采用特殊的编译过程。Spring AOP不需要控制类加载器层次结构，因此适合在Servlet容器或应用程序服务器中使用。
+>
+> Spring AOP目前支持的是方法执行连接点，也就是支持方法及其以上的AOP功能。
+>
+> Spring AOP默认采用的是 **标准JDK动态代理**，使得任何接口都能够被代理。
+>
+> Spring AOP 也可以使用 **CGLIB动态代理**，如果代理类没有实现接口，则默认使用CGLIB动态代理技术。
 
-#### 注意：
-- a：JoinPoint 形参必须放在第一位
-- b：可以添加 Execption 异常形参
+##### 1.3 @AspectJ支持
 
+> @AspectJ指的是将方面生命为使用注释注释的常规java类的样式。Spring使用AspectJ提供的库解释与@AspectJ相同，用于切入点解析和匹配。**因此，Spring AOP运行仍然是单纯的Spring AOP，不依赖于AspectJ。**
 
-#### 3、注解 @ASpect ：
-指定哪个类是切面类(配置在切面类上---必须存在)。
+1.3.1 开启@AspectJ支持
 
-#### 4、注解 @EnableAspectJAutoProxy：
-开启基于注解的AOP功能（配置在@Confignation注解的位置--必须存在）。
+> 需要在Spring中配置使用@AspectJ方面，需要启动Spring支持，以便基于@AspectJ方面配置Spring AOP，并根据这些方面是否建议来执行bean。
 
-#### 5、注解 @PointCut ：
-使用AspectJ表达式来定义切入点。
+###### 1.3.2 使用实例
+
+第一步：添加jar包依赖，主要是包含Spring-AOP.jar以及aspectjweaver.jar两个jar。
+
+```xml
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-aop</artifactId>
+      <version>${spring.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjweaver</artifactId>
+      <version>1.8.9</version>
+    </dependency>
+```
+
+第二步：开启@AspectJ支持。使用配置类方式：
+
+```java
+@Configuration
+@EnableAspectJAutoProxy
+public class AOPConfig {
+    //将切面以及连接点全部加入到Spring容器中
+    @Bean
+    public AOP1 aop1() {
+        return new AOP1();
+    }
+
+    @Bean
+    public MyService myService() {
+        return new MyService();
+    }
+}
+```
+
+第三步：声明一个切面，用于配置切入点以及建议。
+
+```java
+//@Aspect用于标识该类为一个切面类
+@Aspect
+public class AOP1 {
+
+    @Pointcut("execution(* cn.zsl.service.*.*(..))")
+    public void aspect() {
+    }
+
+    @Before("aspect()")
+    public void beforeAdvide(JoinPoint point){
+        System.out.println("触发了前置通知！");
+        System.out.println(point);
+    }
+}
+```
+
+第四步：配置连接点，完成配置。
+
+```java
+package cn.zsl.service;
+
+public class MyService {
+
+    public String returnName(int id) {
+        System.out.println("id值为："  + id);
+        return String.valueOf("zsl" + id);
+    }
+}
+```
+
+###### 1.3.3 切入点表达式
+
+> 切入点表达式可以使用 '&&' 、 '||' 组合切入点表达式和 '!'。也可以通过名称引入切入点表达式。切入点表达式其他方法标识：
+>
+> - `anyPublicOperation`  ：如果方法执行连接点标识任何公共方法的执行，则匹配。
+> - inTrading：如果方法执行在Transaction模块中，则匹配。
+> - tradingOperation：如果方法执行标识Transaction模块中的任何公共方法，则执行。
+> - execution：根据
+
+```java
+@Pointcut("execution(public * *(..))")
+private void anyPublicOperation() {}
+
+@Pointcut("within(com.xyz.someapp.trading..*)")
+private void inTrading() {}
+
+@Pointcut("anyPublicOperation() && inTrading()")
+private void tradingOperation() {}
+```
+
+切入点表达式实例：
+
+```java
+//执行任何公共方法
+execution(public * *(..))
+
+//执行任何以find开头的方法
+execution(* find*(..))
+
+//执行对应包中的任何类的任何方法
+execution(* com.zsl.service.*.*(..))
+
+//执行服务包或子包中定义的任何方法
+execution(* com.zsl.service..*.*(..))
+
+//服务包或子包中的任何连接点（仅在Spring AOP中执行方法）：
+within(com.xyz.service..*)
+
+//代理实现 AccountService 接口的任何连接点（仅在Spring AOP中执行方法）：
+this(com.xyz.service.AccountService)
+
+//目标对象实现 AccountService 接口的任何连接点（仅在Spring AOP中执行方法）：
+target(com.xyz.service.AccountService)
+
+//任何连接点（仅在Spring AOP中执行的方法），它接受一个参数，并且在运行时传递的参数是 Serializable ：
+args(java.io.Serializable)
+
+//目标对象具有 @Transactional 注释的任何连接点（仅在Spring AOP中执行方法）：
+@target(org.springframework.transaction.annotation.Transactional)
+
+//任何连接点（仅在Spring AOP中执行方法），其中目标对象的声明类型具有 @Transactional 注释：
+@within(org.springframework.transaction.annotation.Transactional)
+    
+//任何连接点（仅在Spring AOP中执行方法），其中执行方法具有 @Transactional 注释：
+@annotation(org.springframework.transaction.annotation.Transactional)
+    
+//任何连接点（仅在Spring AOP中执行的方法），它接受一个参数，并且传递的参数的运行时类型具有 @Classified 注释：
+@args(com.xyz.security.Classified)
+    
+//名为 tradeService 的Spring bean上的任何连接点（仅在Spring AOP中执行方法）：
+bean(tradeService)
+    
+//具有与通配符表达式 *Service 匹配的名称的Spring bean上的任何连接点（仅在Spring AOP中执行方法）：
+bean(*Service)
+```
 
 
 
